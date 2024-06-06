@@ -127,14 +127,12 @@ with r1c2:
 
 r2c1, r2c2, r2c3 = st.columns((2, 5, 3), gap='small')
 with r2c1:
-    st.subheader('Gain/Loss :small_red_triangle::small_red_triangle_down:')
-    # need to resize the graph and create a function
-    # apple_data = yf.download('AAPL', start='2021-01-01', end='2023-12-31')
-    # fig = px.line(apple_data, x = apple_data.index, y = apple_data['Adj Close'], title = 'Stock Prices', width= 200, height=400)
-    df_fn1 = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
+    # st.subheader('Gain/Loss :small_red_triangle::small_red_triangle_down:')
+    st.subheader('Number of News Across Companies')
+    df_fn1 = filtered_df_fn.groupby('company')['sentiment_score'].count().reset_index(name='Total')
     # fig = px.bar(df_fn1, y='Total', x='sentiment_score', template='plotly_dark', height=500)
     # st.plotly_chart(fig, use_container_width=True)
-    st.area_chart(df_fn1, color='sentiment_score')
+    st.table(df_fn1)
 
 with r2c2:
     st.subheader('Historical Stock Data')
