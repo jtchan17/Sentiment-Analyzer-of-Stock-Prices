@@ -112,7 +112,7 @@ else:
     filtered_df_fn = conn.query(fn_query, ttl=10000)
     filtered_df_sp = conn.query(sp_query, ttl=10000)
 
-###### Data Visualization/EDA ######
+#####################################################################
 #ROW 1
 r1c1, r1c2 = st.columns((7, 3), gap='small')
 with r1c1:
@@ -123,10 +123,26 @@ with r1c1:
 
 with r1c2:
     st.subheader('Highest Price Across Years')
-    query = 'SELECT YEAR(date) as Year, company AS Companies, MAX(high) AS Highest FROM dashboard.stockprice WHERE YEAR(date) in (2021, 2022, 2023) GROUP BY Companies, Year ORDER BY Year DESC, Highest DESC;'
-    df_highest = conn.query(query, ttl=600)
-    st.table(df_highest)
+    # query = 'SELECT YEAR(date) as Year, company AS Companies, MAX(high) AS Highest FROM dashboard.stockprice WHERE YEAR(date) in (2021, 2022, 2023) GROUP BY Companies, Year ORDER BY Year DESC, Highest DESC;'
+    # df_highest = conn.query(query, ttl=600)
 
+    def filter_years(df, year):
+        df['date'] = pd.to_datetime(df['date'])
+        if year != 'All':
+            # df_filtered = df[df['date']].dt.year
+            df['year'] = df['date'].dt.year
+        else:
+            df['year'] = df['date'].dt.year
+            
+        result = df.groupby(['year', 'company']).agg({'high': 'max'}).reset_index()
+        result.rename(columns={'year': 'Year', 'company': 'Companies', 'high': 'Highest'}, inplace=True)
+        result = result.sort_values(by=['Year', 'Highest'], ascending=[True, False])
+        result = result.reset_index(drop=True)
+        return result
+    
+    df_highest = filter_years(filtered_df_sp, select_year)
+    st.table(df_highest)
+#####################################################################
 #ROW 2
 r2c1, r2c2 = st.columns((3, 5), gap='small')
 with r2c1:
@@ -141,32 +157,29 @@ with r2c2:
     df_melted = pd.melt(df_article_freq, id_vars='published_date', var_name='company', value_name='frequency')
     fig = px.line(df_melted, x='published_date', y="frequency", height=500, width = 300, template='gridon', color='company')
     st.plotly_chart(fig,use_container_width=True)
-
+#####################################################################
 #ROW 3
 popover = st.popover("Choose sentiments to display")
 positive = popover.checkbox('Positive', key='positive', value=True)
 negative = popover.checkbox('Negative', key='negative', value=True)
 neutral = popover.checkbox('Neutral', key='neutral', value=True)
 
-r3c1, r3c2, r3c3 = st.columns((5, 6, 3), gap='small')
+# List of selected companies
+sentiments = {'positive': positive, 'negative': negative, 'neutral': neutral}
+selected_sentiments = [sentiment for sentiment, selected in sentiments.items() if selected]
+
+def filter_sentiment(df):
+    if selected_sentiments:
+        df = df[df['sentiment_score'].isin(selected_sentiments)]
+    return df
+
+r3c1, r3c2 = st.columns((5,5), gap='small')
 with r3c1:
     st.subheader('Sentiment Score Over Time')
-    sentiments = {'positive': positive, 'negative': negative, 'neutral': neutral}
-
-    # List of selected companies
-    selected_sentiments = [sentiment for sentiment, selected in sentiments.items() if selected]
-
-    # Determine queries based on selected filters
-    if not selected_companies:
-        filtered_sentiment_df_fn = filtered_df_fn
 
     #sentiment score
-    df_fn1 = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
-    if not selected_companies:
-        filtered_sentiment_df_fn = df_fn1
-    else: 
-        df_fn1 = df_fn1[df_fn1['sentiment_score'].isin(selected_sentiments)]
-
+    df_sentiment = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
+    df_fn1 = filter_sentiment(df_sentiment)
     fig = px.pie(df_fn1, values='Total', names='sentiment_score', template='plotly_dark', hole=0.5)
     fig.update_traces(textposition='inside')
     st.plotly_chart(fig, use_container_width=True)
@@ -175,26 +188,21 @@ with r3c2:
     st.subheader('Sentiment Score Across Companies')
     grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
     df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
-    df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiments', value_name='frequency')
-
-    if not selected_companies:
-        filtered_sentiment_df_fn = df_melted
-    else: 
-        df_fn1 = df_melted[df_melted['sentiments'].isin(selected_sentiments)]
-
+    df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiment_score', value_name='frequency')
+    df_fn1 = filter_sentiment(df_melted)
     bar_chart = alt.Chart(df_fn1).mark_bar().encode(
-        x="sentiments",
+        x="sentiment_score",
         y="frequency",
         color="company"
     )
     st.altair_chart(bar_chart, use_container_width=True)
 
-with r3c3: 
-    st.header('')
-    grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
+    df_fn1 = filter_sentiment(filtered_df_fn)
+    grouped_sentiment_df_fn = df_fn1.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
     df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
     st.table(df_sentiment_freq)
-
+    
+#####################################################################
 #ROW 4
 r4c1, r4c2 = st.columns((3, 7), gap='small')
 
@@ -219,20 +227,21 @@ with r4c2:
     fig.update_traces(text=df_fn1['publisher'], textposition='inside')
     st.plotly_chart(fig, use_container_width=True, height = 1000)
 
+#####################################################################
+# Tab
 pricing_data, news = st.tabs(['Stock Price', 'News'])
-
 with pricing_data:
-    st.subheader('Stock Price')
-    with st.container(height=500, border=True):
-        st.table(filtered_df_sp)
+#     st.subheader('Stock Price')
+#     with st.container(height=500, border=True):
+#         st.table(filtered_df_sp)
     csv=filtered_df_sp.to_csv(index = False).encode('utf-8')
     st.download_button(label='Download Historical Data', data= csv, file_name='Historical Data.csv')
 
 with news:
-    st.subheader('Financial News')
-    with st.container(height=500, border=True):
-        df_fn1 = filtered_df_fn.sort_values(by="published_date", ascending=True)
-        st.table(df_fn)
+    # st.subheader('Financial News')
+#     with st.container(height=500, border=True):
+#         df_fn1 = filtered_df_fn.sort_values(by="published_date", ascending=True)
+#         st.table(df_fn)
     csv=filtered_df_fn.to_csv(index = False).encode('utf-8')
     st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
 
