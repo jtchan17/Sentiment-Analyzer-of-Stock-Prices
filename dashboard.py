@@ -1,9 +1,8 @@
 import streamlit as st 
 import pandas as pd 
-import numpy as np 
-import yfinance as yf 
 import plotly_express as px 
 import altair as alt
+
 
 #####################################################################
 # Page configuration
@@ -28,9 +27,10 @@ alt.themes.enable("dark")
 #####################################################################
 
 #####################################################################
-# Side bar (Filtering)
+# Side bar (Login)
 with st.sidebar:
     st.title('Welcome! User')
+
 #####################################################################
 
 #####################################################################
@@ -42,39 +42,42 @@ fil_col1, fil_col2, fil_col3, fil_col4 = st.columns([1.25, 2, 4, 1])
 
 with fil_col1:
     years = ['All', '2021', '2022', '2023']
-    select_year = st.selectbox('Select Year', years, key='select_year')
+    popover = st.popover("Select Year")
+    select_year = popover.radio(label='Select Year',options=years, key='select_year', label_visibility="collapsed")
 
 with fil_col2:
-    company_expander = st.expander(label='Company')
-    with company_expander:
-        aapl = st.checkbox('AAPL', key='aapl', value=False)
-        amzn = st.checkbox('AMZN', key='amzn', value=False)
-        meta = st.checkbox('META', key='meta', value=False)
-        msft = st.checkbox('MSFT', key='msft', value=False)
-        tsla = st.checkbox('TSLA', key='tsla', value=False)
+    popover = st.popover("Company")
+    aapl = popover.checkbox('AAPL', key='aapl', value=True)
+    amzn = popover.checkbox('AMZN', key='amzn', value=True)
+    meta = popover.checkbox('META', key='meta', value=True)
+    msft = popover.checkbox('MSFT', key='msft', value=True)
+    tsla = popover.checkbox('TSLA', key='tsla', value=True)
     companies = {'AAPL': aapl, 'AMZN': amzn, 'META': meta, 'MSFT': msft, 'TSLA': tsla}
 
-if 'aapl' not in st.session_state:
-    st.session_state['aapl'] = False
-if 'amzn' not in st.session_state:
-    st.session_state['amzn'] = False
-if 'meta' not in st.session_state:
-    st.session_state['meta'] = False
-if 'msft' not in st.session_state:
-    st.session_state['msft'] = False
-if 'tsla' not in st.session_state:
-    st.session_state['tsla'] = False
-if 'select_year' not in st.session_state:
-    st.session_state['select_year'] = 'All'
+# if 'aapl' not in st.session_state:
+#     st.session_state['aapl'] = True
+# if 'amzn' not in st.session_state:
+#     st.session_state['amzn'] = True
+# if 'meta' not in st.session_state:
+#     st.session_state['meta'] = True
+# if 'msft' not in st.session_state:
+#     st.session_state['msft'] = True
+# if 'tsla' not in st.session_state:
+#     st.session_state['tsla'] = True
+# if 'select_year' not in st.session_state:
+#     st.session_state['select_year'] = 'All'
 
 with fil_col3:
     def clear_filters():
-        st.session_state['aapl'] = False
-        st.session_state['amzn'] = False
-        st.session_state['meta'] = False
-        st.session_state['msft'] = False
-        st.session_state['tsla'] = False
+        st.session_state['aapl'] = True
+        st.session_state['amzn'] = True
+        st.session_state['meta'] = True
+        st.session_state['msft'] = True
+        st.session_state['tsla'] = True
         st.session_state['select_year'] = 'All'
+        st.session_state['positive'] = True
+        st.session_state['negative'] = True
+        st.session_state['neutral'] = True
 
     btn_clear = st.button('Clear All Filter', key='clearFilter', on_click=clear_filters)
 
@@ -106,16 +109,15 @@ if select_year == 'All' and not selected_companies:
 else:
     fn_query = query('financialnews', select_year, selected_companies)
     sp_query = query('stockprice', select_year, selected_companies)
-    filtered_df_fn = conn.query(fn_query, ttl=600)
-    filtered_df_sp = conn.query(sp_query, ttl=600)
+    filtered_df_fn = conn.query(fn_query, ttl=10000)
+    filtered_df_sp = conn.query(sp_query, ttl=10000)
 
 ###### Data Visualization/EDA ######
+#ROW 1
 r1c1, r1c2 = st.columns((7, 3), gap='small')
 with r1c1:
     st.subheader('Historical Stock Data')
     st.markdown('###### currency in USD')
-    # query = "SELECT date, adj_close, company FROM filtered_df_sp;"
-    # df_sp1 = conn.query(query, ttl=600)
     fig = px.line(filtered_df_sp, x='date', y='adj_close', height=500, width = 300, template='gridon', color='company')
     st.plotly_chart(fig,use_container_width=True)
 
@@ -125,70 +127,118 @@ with r1c2:
     df_highest = conn.query(query, ttl=600)
     st.table(df_highest)
 
-r2c1, r2c2, r2c3 = st.columns((2, 5, 3), gap='small')
+#ROW 2
+r2c1, r2c2 = st.columns((3, 5), gap='small')
 with r2c1:
-    # st.subheader('Gain/Loss :small_red_triangle::small_red_triangle_down:')
     st.subheader('Number of News Across Companies')
-    df_fn1 = filtered_df_fn.groupby('company')['sentiment_score'].count().reset_index(name='Total')
-    # fig = px.bar(df_fn1, y='Total', x='sentiment_score', template='plotly_dark', height=500)
-    # st.plotly_chart(fig, use_container_width=True)
+    df_fn1 = filtered_df_fn.groupby('company')['title'].count().reset_index(name='Total')
     st.table(df_fn1)
 
 with r2c2:
-    st.subheader('Historical Stock Data')
-    fig = px.bar(filtered_df_sp, x='date', y='adj_close', height=500, width = 300, template='gridon', color='company')
+    st.subheader('Frequency of News Over Time')
+    df_article_freq = filtered_df_fn.groupby(['published_date', 'company']).size().unstack(fill_value=0)
+    df_article_freq = df_article_freq.reset_index()
+    df_melted = pd.melt(df_article_freq, id_vars='published_date', var_name='company', value_name='frequency')
+    fig = px.line(df_melted, x='published_date', y="frequency", height=500, width = 300, template='gridon', color='company')
     st.plotly_chart(fig,use_container_width=True)
-    # st.bar_chart(df_sp, x='date', y='adj_close', height=500, width = 300, color='company')
 
-with r2c3:
+#ROW 3
+popover = st.popover("Choose sentiments to display")
+positive = popover.checkbox('Positive', key='positive', value=True)
+negative = popover.checkbox('Negative', key='negative', value=True)
+neutral = popover.checkbox('Neutral', key='neutral', value=True)
+
+r3c1, r3c2, r3c3 = st.columns((5, 6, 3), gap='small')
+with r3c1:
     st.subheader('Sentiment Score Over Time')
+    sentiments = {'positive': positive, 'negative': negative, 'neutral': neutral}
+
+    # List of selected companies
+    selected_sentiments = [sentiment for sentiment, selected in sentiments.items() if selected]
+
+    # Determine queries based on selected filters
+    if not selected_companies:
+        filtered_sentiment_df_fn = filtered_df_fn
+
     #sentiment score
     df_fn1 = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
+    if not selected_companies:
+        filtered_sentiment_df_fn = df_fn1
+    else: 
+        df_fn1 = df_fn1[df_fn1['sentiment_score'].isin(selected_sentiments)]
+
     fig = px.pie(df_fn1, values='Total', names='sentiment_score', template='plotly_dark', hole=0.5)
-    fig.update_traces(text=df_fn1['sentiment_score'], textposition='inside')
-    st.plotly_chart(fig,use_container_width=True)
+    fig.update_traces(textposition='inside')
+    st.plotly_chart(fig, use_container_width=True)
 
-r3c1, r3c2 = st.columns((3, 10), gap='small')
+with r3c2:
+    st.subheader('Sentiment Score Across Companies')
+    grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
+    df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
+    df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiments', value_name='frequency')
 
-with r3c1:
+    if not selected_companies:
+        filtered_sentiment_df_fn = df_melted
+    else: 
+        df_fn1 = df_melted[df_melted['sentiments'].isin(selected_sentiments)]
+
+    bar_chart = alt.Chart(df_fn1).mark_bar().encode(
+        x="sentiments",
+        y="frequency",
+        color="company"
+    )
+    st.altair_chart(bar_chart, use_container_width=True)
+
+with r3c3: 
+    st.header('')
+    grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
+    df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
+    st.table(df_sentiment_freq)
+
+#ROW 4
+r4c1, r4c2 = st.columns((3, 7), gap='small')
+
+with r4c1:
     st.subheader('Top 10 Publishers :newspaper:')
     df_fn1 = (filtered_df_fn.groupby('publisher').size().reset_index(name='Total'))
     df_fn1 = (df_fn1.sort_values(by="Total", ascending=False)).head(10)
     st.dataframe(df_fn1,
-                 column_order=("publisher", "Total"),
-                 hide_index=True,
-                 width=None,
-                 column_config={
-                     "publisher": st.column_config.TextColumn("Publisher",),
-                     "Total": st.column_config.ProgressColumn("Total",format="%f",min_value=0,max_value=max(df_fn1.Total),)
-                     }
-                 )
+                column_order=("publisher", "Total"),
+                hide_index=True,
+                width=None,
+                column_config={
+                    "publisher": st.column_config.TextColumn("Publisher",),
+                    "Total": st.column_config.ProgressColumn("Total",format="%f",min_value=0,max_value=max(df_fn1.Total),)
+                    }
+                )
 
-with r3c2:
+with r4c2:
     st.subheader('Publishers :newspaper:')
     df_fn1 = filtered_df_fn.groupby('publisher').size().reset_index(name='Total')
     fig = px.bar(df_fn1,x='Total', y='publisher', template='seaborn')
     fig.update_traces(text=df_fn1['publisher'], textposition='inside')
-    st.plotly_chart(fig, use_container_width=True, height = 500)
+    st.plotly_chart(fig, use_container_width=True, height = 1000)
 
-pricing_data, news = st.tabs(['Pricing Data', 'News'])
+pricing_data, news = st.tabs(['Stock Price', 'News'])
 
 with pricing_data:
-    st.subheader('Price Movements')
+    st.subheader('Stock Price')
     with st.container(height=500, border=True):
         st.table(filtered_df_sp)
     csv=filtered_df_sp.to_csv(index = False).encode('utf-8')
     st.download_button(label='Download Historical Data', data= csv, file_name='Historical Data.csv')
 
 with news:
-    st.subheader('News')
+    st.subheader('Financial News')
     with st.container(height=500, border=True):
         df_fn1 = filtered_df_fn.sort_values(by="published_date", ascending=True)
         st.table(df_fn)
     csv=filtered_df_fn.to_csv(index = False).encode('utf-8')
     st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
 
-st.subheader('Summary')
+st.subheader('Sentiment Analyzer')
+st.markdown('#### Please put your financial headline here: ')
+st.text_input('headline', label_visibility="collapsed")
+st.button('Predict')
 
 #####################################################################
-

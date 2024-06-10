@@ -2,9 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime as dt
 import nltk
-from newspaper import Article
-from newspaper import Config
-from wordcloud import WordCloud, STOPWORDS
+from newspaper3k import Article
+from newspaper3k import Config
+# from wordcloud import WordCloud, STOPWORDS
 from gnews import GNews
 
 nltk.download('punkt')
@@ -13,10 +13,6 @@ config = Config()
 config.browser_user_agent = user_agent
 config.request_timeout = 10
 
-# save the company name in a variable
-# company_name = input("Please provide the name of the Company or a Ticker: ")
-#As long as the company name is valid, not empty...
-# if company_name != '':
 print('Searching for and analyzing company_name, Please be patient, it might take a while...')
 
 # #Extract News with Google News
