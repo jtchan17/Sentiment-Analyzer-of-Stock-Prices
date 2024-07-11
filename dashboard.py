@@ -228,6 +228,11 @@ with r4c2:
     st.plotly_chart(fig, use_container_width=True, height = 1000)
 
 #####################################################################
+st.subheader('Sentiment Analyzer')
+st.markdown('#### Please put your financial headline here: ')
+st.text_input('headline', label_visibility="collapsed")
+st.button('Predict')
+
 # Tab
 pricing_data, news = st.tabs(['Stock Price', 'News'])
 with pricing_data:
@@ -244,10 +249,4 @@ with news:
 #         st.table(df_fn)
     csv=filtered_df_fn.to_csv(index = False).encode('utf-8')
     st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
-
-st.subheader('Sentiment Analyzer')
-st.markdown('#### Please put your financial headline here: ')
-st.text_input('headline', label_visibility="collapsed")
-st.button('Predict')
-
 #####################################################################
