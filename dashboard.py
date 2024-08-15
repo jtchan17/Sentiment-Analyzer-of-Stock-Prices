@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd 
 import plotly_express as px 
 import altair as alt
-
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
 
 #####################################################################
 # Page configuration
@@ -230,8 +231,29 @@ with r4c2:
 #####################################################################
 st.subheader('Sentiment Analyzer')
 st.markdown('#### Please put your financial headline here: ')
-st.text_input('headline', label_visibility="collapsed")
+headline_input = st.text_input('headline', label_visibility="collapsed")
+
+# Load the tokenizer and model
+tokenizer = BertTokenizer.from_pretrained('./model')
+model = BertForSequenceClassification.from_pretrained('./model')
+
+# Tokenize the input
+inputs = tokenizer(headline_input, return_tensors='pt')
+
+# Perform inference
+with torch.no_grad():
+    outputs = model(**inputs)
+
+# Get the prediction
+logits = outputs.logits
+prediction = torch.argmax(logits, dim=1).item()
+sentiments = {0: 'Neutral', 1: 'Negative', 2: 'Positive'}
+
 st.button('Predict')
+
+if headline_input != '':
+    st.markdown('Related company: ')
+    st.markdown(f'Sentiment: {sentiments[prediction]}')
 
 # Tab
 pricing_data, news = st.tabs(['Stock Price', 'News'])
