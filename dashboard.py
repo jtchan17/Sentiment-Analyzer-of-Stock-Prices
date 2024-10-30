@@ -4,6 +4,20 @@ import plotly_express as px
 import altair as alt
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
+import matplotlib.pyplot as plt
+import io
+import base64
+import pdfkit
+import jinja2
+# from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+from streamlit.components.v1 import iframe
+import plotly.io as pio
+import matplotlib.pyplot as plt
+import os
+
+#####################################################################
+PDF_TEMPLATE_FILE = 'PDFtemplate.html'
+IMG_FOLDER = os.path.join(os.getcwd(), 'image')
 
 #####################################################################
 # Page configuration
@@ -82,8 +96,9 @@ with fil_col3:
 
     btn_clear = st.button('Clear All Filter', key='clearFilter', on_click=clear_filters)
 
-with fil_col4:
-    st.button('Export 	:arrow_down_small:')
+#filcol_4
+
+
 
 ###### Filter based on Year and Company ######
 def query(table, year, companies):
@@ -113,14 +128,14 @@ else:
     filtered_df_fn = conn.query(fn_query, ttl=10000)
     filtered_df_sp = conn.query(sp_query, ttl=10000)
 
-#####################################################################
+#====================================================================
 #ROW 1
 r1c1, r1c2 = st.columns((7, 3), gap='small')
 with r1c1:
     st.subheader('Historical Stock Data')
     st.markdown('###### currency in USD')
-    fig = px.line(filtered_df_sp, x='date', y='adj_close', height=500, width = 300, template='gridon', color='company')
-    st.plotly_chart(fig,use_container_width=True)
+    chart_HistoricalStockData = px.line(filtered_df_sp, x='date', y='adj_close', template='gridon', color='company')
+    st.plotly_chart(chart_HistoricalStockData,use_container_width=True)   
 
 with r1c2:
     st.subheader('Highest Price Across Years')
@@ -141,24 +156,24 @@ with r1c2:
         result = result.reset_index(drop=True)
         return result
     
-    df_highest = filter_years(filtered_df_sp, select_year)
-    st.table(df_highest)
-#####################################################################
+    table_HighestPriceAcrossYear = filter_years(filtered_df_sp, select_year)
+    st.table(table_HighestPriceAcrossYear)
+#====================================================================
 #ROW 2
 r2c1, r2c2 = st.columns((3, 5), gap='small')
 with r2c1:
     st.subheader('Number of News Across Companies')
-    df_fn1 = filtered_df_fn.groupby('company')['title'].count().reset_index(name='Total')
-    st.table(df_fn1)
+    table_NumberofNewsAcrossCompanies = filtered_df_fn.groupby('company')['title'].count().reset_index(name='Total')
+    st.table(table_NumberofNewsAcrossCompanies)
 
 with r2c2:
     st.subheader('Frequency of News Over Time')
     df_article_freq = filtered_df_fn.groupby(['published_date', 'company']).size().unstack(fill_value=0)
     df_article_freq = df_article_freq.reset_index()
     df_melted = pd.melt(df_article_freq, id_vars='published_date', var_name='company', value_name='frequency')
-    fig = px.line(df_melted, x='published_date', y="frequency", height=500, width = 300, template='gridon', color='company')
-    st.plotly_chart(fig,use_container_width=True)
-#####################################################################
+    chart_FrequencyofNewsOverTime = px.line(df_melted, x='published_date', y="frequency", template='gridon', color='company')
+    st.plotly_chart(chart_FrequencyofNewsOverTime,use_container_width=True)
+#====================================================================
 #ROW 3
 popover = st.popover("Choose sentiments to display")
 positive = popover.checkbox('Positive', key='positive', value=True)
@@ -179,11 +194,14 @@ with r3c1:
     st.subheader('Sentiment Score Over Time')
 
     #sentiment score
-    df_sentiment = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
-    df_fn1 = filter_sentiment(df_sentiment)
-    fig = px.pie(df_fn1, values='Total', names='sentiment_score', template='plotly_dark', hole=0.5)
-    fig.update_traces(textposition='inside')
-    st.plotly_chart(fig, use_container_width=True)
+    def plot_pie():
+        df_sentiment = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
+        df_fn1 = filter_sentiment(df_sentiment)
+        chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', template='plotly_dark', hole=0.5)
+        chart_SentimentScoreOverTime.update_traces(textposition='inside')
+        return chart_SentimentScoreOverTime
+    chart_SentimentScoreOverTime = plot_pie()
+    st.plotly_chart(chart_SentimentScoreOverTime, use_container_width=True)
 
 with r3c2:
     st.subheader('Sentiment Score Across Companies')
@@ -191,27 +209,27 @@ with r3c2:
     df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
     df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiment_score', value_name='frequency')
     df_fn1 = filter_sentiment(df_melted)
-    bar_chart = alt.Chart(df_fn1).mark_bar().encode(
+    chart_SentimentScoreAcrossCompanies = alt.Chart(df_fn1).mark_bar().encode(
         x="sentiment_score",
         y="frequency",
         color="company"
     )
-    st.altair_chart(bar_chart, use_container_width=True)
+    st.altair_chart(chart_SentimentScoreAcrossCompanies, use_container_width=True)
 
     df_fn1 = filter_sentiment(filtered_df_fn)
     grouped_sentiment_df_fn = df_fn1.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
-    df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
-    st.table(df_sentiment_freq)
+    table_SentimentFrequency = grouped_sentiment_df_fn.reset_index()
+    st.table(table_SentimentFrequency)
     
-#####################################################################
+#====================================================================
 #ROW 4
 r4c1, r4c2 = st.columns((3, 7), gap='small')
 
 with r4c1:
     st.subheader('Top 10 Publishers :newspaper:')
     df_fn1 = (filtered_df_fn.groupby('publisher').size().reset_index(name='Total'))
-    df_fn1 = (df_fn1.sort_values(by="Total", ascending=False)).head(10)
-    st.dataframe(df_fn1,
+    table_TopPublishers = (df_fn1.sort_values(by="Total", ascending=False)).head(10)
+    st.dataframe(table_TopPublishers,
                 column_order=("publisher", "Total"),
                 hide_index=True,
                 width=None,
@@ -224,11 +242,12 @@ with r4c1:
 with r4c2:
     st.subheader('Publishers :newspaper:')
     df_fn1 = filtered_df_fn.groupby('publisher').size().reset_index(name='Total')
-    fig = px.bar(df_fn1,x='Total', y='publisher', template='seaborn')
-    fig.update_traces(text=df_fn1['publisher'], textposition='inside')
-    st.plotly_chart(fig, use_container_width=True, height = 1000)
+    chart_Publishers = px.bar(df_fn1,x='Total', y='publisher', template='seaborn')
+    chart_Publishers.update_traces(text=df_fn1['publisher'], textposition='inside')
+    st.plotly_chart(chart_Publishers, use_container_width=True, height = 1000)
 
-#####################################################################
+#====================================================================
+#Sentiment Analyzer
 st.subheader('Sentiment Analyzer')
 st.markdown('#### Please put your financial headline here: ')
 headline_input = st.text_input('headline', label_visibility="collapsed")
@@ -255,6 +274,92 @@ if headline_input != '':
     st.markdown('Related company: ')
     st.markdown(f'Sentiment: {sentiments[prediction]}')
 
+with fil_col4:
+    templateLoader = jinja2.FileSystemLoader(searchpath="./")
+    templateEnv = jinja2.Environment(loader=templateLoader)
+    # env = Environment(loader=FileSystemLoader("."), autoescape=select_autoescape())
+    template = templateEnv.get_template(PDF_TEMPLATE_FILE)
+
+    # Convert chart to png image (base64 encoded)
+    def getBase64Img(img):
+        mybuff = io.StringIO()
+        img.write_html(mybuff, include_plotlyjs='cdn')
+        html_bytes = mybuff.getvalue().encode('utf8')
+        newBuff = io.BytesIO(html_bytes)
+        newBuff.seek(0)
+        base64_jpg = base64.b64encode(newBuff.read()).decode('utf8')
+        # href = f'<a href="data:image/png;charset=utf-8;base64, {base64_jpg}" download="plot.html">Download plot</a>'
+        # st.markdown(href, unsafe_allow_html=True)
+        html = f'data:image/png;base64,{base64_jpg}'
+        return html
+        # mybuff = io.StringIO()
+        # b_publishers.write_html(mybuff, include_plotlyjs='cdn')
+        # html_bytes = mybuff.getvalue().encode('utf8')
+        # newBuff = io.BytesIO(html_bytes)
+        # newBuff.seek(0)
+        # base64_jpg = base64.b64encode(newBuff.read()).decode('utf8')
+
+    def getTableHTML(table):
+        table_html = table.to_html(index=False)
+        newBuff = io.BytesIO(table_html)
+        newBuff.seek(0)
+        base64_jpg = base64.b64encode(newBuff.read()).decode('utf8')
+        href = f'<a href="data:image/png;charset=utf-8;base64, {base64_jpg}" download="plot.html">Download table</a>'
+        st.markdown(href, unsafe_allow_html=True)
+        return table_html
+    
+    def save_plotly_plot(name, fig):
+        file_name = os.path.join(IMG_FOLDER, f"{ name }.png")
+        fig.write_image(file_name, engine="kaleido")
+        return file_name
+    
+    def save_altair_plot(name, fig):
+        file_name = os.path.join(IMG_FOLDER, f"{ name }.png")
+        fig.save(file_name)
+        return file_name
+    
+    # hsd_html = getBase64Img(chart_HistoricalStockData)
+    # fnot_html = getBase64Img(chart_FrequencyofNewsOverTime)
+    # ssot_html = getBase64Img(chart_SentimentScoreOverTime)
+    # publisher = getBase64Img(chart_Publishers)
+    hsd_html = save_plotly_plot('historicalprice_line', chart_HistoricalStockData)
+    fnot_html = save_plotly_plot('news_line', chart_FrequencyofNewsOverTime)
+    ssot_html = save_plotly_plot('sentiment_pie', chart_SentimentScoreOverTime)
+    publisher = save_plotly_plot('publiser_bar', chart_Publishers)
+    ssac_html = save_altair_plot('companies_sentiment_bar', chart_SentimentScoreAcrossCompanies)
+
+    try:
+        wkhtml_path = pdfkit.configuration(wkhtmltopdf = 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
+        
+        # hpay_html = getTableHTML(table_HighestPriceAcrossYear)
+
+        html = template.render(
+            hsd_url = hsd_html,
+            fnot_url = fnot_html,
+            ssot_url = ssot_html,
+            ssac_url = ssac_html,
+            publishers_url = publisher,
+            # hpay_url = hpay_html,
+
+        )
+
+        pdf = pdfkit.from_string(html, configuration = wkhtml_path, options = {"enable-local-file-access": "", "zoom": "1.3"})
+
+        submit = st.download_button(
+                "Export⬇️ ",
+                data=pdf,
+                file_name="Stock Prices Report.pdf",
+                mime="application/pdf",
+            )
+        
+        if submit:
+            st.balloons()
+
+    except(ValueError, TypeError):
+        st.button('Export⬇️')
+        print('Button with label only')
+    
+#====================================================================
 # Tab
 pricing_data, news = st.tabs(['Stock Price', 'News'])
 with pricing_data:

@@ -6,8 +6,7 @@
         <title>Sentiment Analyzer</title>
     </head>
     <body>
-        <h1 style="font-size: 50px; font-weight:bold">Sentiment Analyzer <span style="color:blue">Dashboard</span> of Stock Prices</h1>
-        <br><br>
+        <h1 style="font-size: 30px; font-weight:bold">Sentiment Analyzer <span style="color:blue">Dashboard</span> of Stock Prices</h1>
         <div style="width: 100%; display: table;">
             <div style="display: table-row">
                 <div style="width: 70%; display: table-cell;"> 
@@ -15,22 +14,25 @@
                     <br><br>
                     <span style="font-size:18px"><i>Currency in USD</i></span>
                     <br><br>
-                    <img src='{{ hsd_url }}' alt="Historical Stock Data" width=100%>
+                    <img src="{{ hsd_url }}" alt="Historical Stock Data" style="width:90%">
                     <br/><br/>
                 </div>
                 <div style="display: table-cell;">  
                     <span style="font-size:25px; font-weight:bold">Highest Price Across Years</span>
                     <br><br>
+
+                    <br/><br/>
                 </div>
             </div>
         </div>
+        <p style="page-break-after: always;"></p>
         <div style="width: 100%; display: table">
             <div style="display: table-row">
                 <div style="width: 40%; display: table-cell;"> 
                     <span style="font-size:25px; font-weight:bold">Number of News Across Companies</span>
                     <br/><br/>
                 </div>
-                <div style="margin-left: 40%; display: table-cell;">  
+                <div style="margin-left: 45%; display: table-cell;">  
                     <span style="font-size:25px; font-weight:bold">Frequency of News Over Time</span>
                     <br><br>
                     <img src='{{ fnot_url }}' alt="Frequency of News Over Time" width=100%>
@@ -38,29 +40,31 @@
                 </div>
             </div>
         </div>
+        <p style="page-break-after: always;"></p>
         <div style="width: 100%; display: table">
             <div style="display: table-row">
                 <div style="width: 40%; display: table-cell;"> 
                     <span style="font-size:25px; font-weight:bold">Sentiment Score Over Time</span>
                     <br><br>
-                    <img src='{{ ssot_url }}' alt="Sentiment Score Over Time" width=100%>
+                    <img src='{{ ssot_url }}' alt="Sentiment Score Over Time" width=100% height="300px">
                     <br/><br/>
                 </div>
-                <div style="margin-left: 40%; display: table-cell;">  
+                <div style="margin-left: 60%; display: table-cell;">  
                     <span style="font-size:25px; font-weight:bold">Sentiment Score Across Companies</span>
                     <br><br>
-                    <img src='{{ ssac_url }}' alt="Sentiment Score Across Companies" width=100%>
+                    <img src='{{ ssac_url }}' alt="Sentiment Score Across Companies" style="width:200px;height:300px;">
                     <br/><br/>
                 </div>
             </div>
         </div>
+        <p style="page-break-after: always;"></p>
         <div style="width: 100%; display: table">
             <div style="display: table-row">
                 <div style="width: 30%; display: table-cell;"> 
                     <span style="font-size:25px; font-weight:bold">Top 10 Publishers</span>
                     <br><br>
                 </div>
-                <div style="margin-left: 30%; display: table-cell;">  
+                <div style="margin-left: 35%; display: table-cell;">  
                     <span style="font-size:25px; font-weight:bold">Publishers</span>
                     <br><br>
                     <img src='{{ publishers_url }}' alt="Publishers" width=100%>
