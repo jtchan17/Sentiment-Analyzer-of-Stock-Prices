@@ -20,7 +20,7 @@
                 <div style="display: table-cell;">  
                     <span style="font-size:25px; font-weight:bold">Highest Price Across Years</span>
                     <br><br>
-
+                    {{ hpay_table }}
                     <br/><br/>
                 </div>
             </div>
@@ -30,6 +30,8 @@
             <div style="display: table-row">
                 <div style="width: 40%; display: table-cell;"> 
                     <span style="font-size:25px; font-weight:bold">Number of News Across Companies</span>
+                    <br/><br/>
+                    {{ nnac_table }}
                     <br/><br/>
                 </div>
                 <div style="margin-left: 45%; display: table-cell;">  
@@ -43,17 +45,18 @@
         <p style="page-break-after: always;"></p>
         <div style="width: 100%; display: table">
             <div style="display: table-row">
-                <div style="width: 40%; display: table-cell;"> 
+                <div style="width: 60%; display: table-cell;"> 
                     <span style="font-size:25px; font-weight:bold">Sentiment Score Over Time</span>
                     <br><br>
-                    <img src='{{ ssot_url }}' alt="Sentiment Score Over Time" width=100% height="300px">
+                    <img src='{{ ssot_url }}' alt="Sentiment Score Over Time" width=100% height="400px">
                     <br/><br/>
                 </div>
-                <div style="margin-left: 60%; display: table-cell;">  
+                <div style="margin-left: 100%; display: table-cell;">  
                     <span style="font-size:25px; font-weight:bold">Sentiment Score Across Companies</span>
                     <br><br>
-                    <img src='{{ ssac_url }}' alt="Sentiment Score Across Companies" style="width:200px;height:300px;">
+                    <img src='{{ ssac_url }}' alt="Sentiment Score Across Companies" style="width:60%;height:330px;">
                     <br/><br/>
+                    {{ ssac_table}}
                 </div>
             </div>
         </div>
@@ -62,6 +65,8 @@
             <div style="display: table-row">
                 <div style="width: 30%; display: table-cell;"> 
                     <span style="font-size:25px; font-weight:bold">Top 10 Publishers</span>
+                    <br><br>
+                    {{ tp_table }}
                     <br><br>
                 </div>
                 <div style="margin-left: 35%; display: table-cell;">  
