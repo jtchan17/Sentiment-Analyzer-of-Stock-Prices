@@ -5,8 +5,6 @@ import altair as alt
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import matplotlib.pyplot as plt
-import io
-import base64
 import pdfkit
 import jinja2
 # from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
@@ -20,12 +18,9 @@ PDF_TEMPLATE_FILE = 'PDFtemplate.html'
 IMG_FOLDER = os.path.join(os.getcwd(), 'image')
 
 #####################################################################
-# Page configuration
-st.set_page_config(
-    page_title="Sentiment Analyzer Dashboard",
-    page_icon="📈",
-    layout="wide",
-    initial_sidebar_state="collapsed")
+# Redirect to app.py if not logged in, otherwise show the navigation menu
+st.header("Admin 1")
+st.write(f"You are logged in as {st.session_state.role}.")
 
 # Initialize connection.
 conn = st.connection('mysql', type='sql')
@@ -44,7 +39,8 @@ alt.themes.enable("dark")
 #####################################################################
 # Side bar (Login)
 with st.sidebar:
-    st.title('Welcome! User')
+    st.title(f'Welcome name')
+
 
 #####################################################################
 
@@ -61,6 +57,19 @@ with fil_col1:
     select_year = popover.radio(label='Select Year',options=years, key='select_year', label_visibility="collapsed")
 
 with fil_col2:
+    if 'aapl' not in st.session_state:
+        st.session_state['aapl'] = True
+    if 'amzn' not in st.session_state:
+        st.session_state['amzn'] = True
+    if 'meta' not in st.session_state:
+        st.session_state['meta'] = True
+    if 'msft' not in st.session_state:
+        st.session_state['msft'] = True
+    if 'tsla' not in st.session_state:
+        st.session_state['tsla'] = True
+    if 'select_year' not in st.session_state:
+        st.session_state['select_year'] = 'All'
+
     popover = st.popover("Company")
     aapl = popover.checkbox('AAPL', key='aapl', value=True)
     amzn = popover.checkbox('AMZN', key='amzn', value=True)
@@ -68,19 +77,6 @@ with fil_col2:
     msft = popover.checkbox('MSFT', key='msft', value=True)
     tsla = popover.checkbox('TSLA', key='tsla', value=True)
     companies = {'AAPL': aapl, 'AMZN': amzn, 'META': meta, 'MSFT': msft, 'TSLA': tsla}
-
-# if 'aapl' not in st.session_state:
-#     st.session_state['aapl'] = True
-# if 'amzn' not in st.session_state:
-#     st.session_state['amzn'] = True
-# if 'meta' not in st.session_state:
-#     st.session_state['meta'] = True
-# if 'msft' not in st.session_state:
-#     st.session_state['msft'] = True
-# if 'tsla' not in st.session_state:
-#     st.session_state['tsla'] = True
-# if 'select_year' not in st.session_state:
-#     st.session_state['select_year'] = 'All'
 
 with fil_col3:
     def clear_filters():
@@ -95,10 +91,6 @@ with fil_col3:
         st.session_state['neutral'] = True
 
     btn_clear = st.button('Clear All Filter', key='clearFilter', on_click=clear_filters)
-
-#filcol_4
-
-
 
 ###### Filter based on Year and Company ######
 def query(table, year, companies):
@@ -135,7 +127,7 @@ with r1c1:
     st.subheader('Historical Stock Data')
     st.markdown('###### currency in USD')
     chart_HistoricalStockData = px.line(filtered_df_sp, x='date', y='adj_close', template='gridon', color='company')
-    st.plotly_chart(chart_HistoricalStockData,use_container_width=True)   
+    st.plotly_chart(chart_HistoricalStockData, key='chart_HistoricalStockData', use_container_width=True)   
 
 with r1c2:
     st.subheader('Highest Price Across Years')
@@ -197,7 +189,11 @@ with r3c1:
     def plot_pie():
         df_sentiment = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
         df_fn1 = filter_sentiment(df_sentiment)
-        chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', template='plotly_dark', hole=0.5)
+        chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', color="sentiment_score",
+                                            color_discrete_map={'negative': '#EF553B', 
+                                                                'positive': '#00CC96', 
+                                                                'neutral': '#636EFA'},
+                                            hole=0.5)
         chart_SentimentScoreOverTime.update_traces(textposition='inside')
         return chart_SentimentScoreOverTime
     chart_SentimentScoreOverTime = plot_pie()
@@ -219,6 +215,8 @@ with r3c2:
     df_fn1 = filter_sentiment(filtered_df_fn)
     grouped_sentiment_df_fn = df_fn1.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
     table_SentimentFrequency = grouped_sentiment_df_fn.reset_index()
+    grouped_sentiment_df_fn.rename(columns={'company': 'Companies', 'negative': 'Negative', 'neutral': 'Neutral', 'positive': 'Positive'}, inplace=True)
+    table_SentimentFrequency = grouped_sentiment_df_fn
     st.table(table_SentimentFrequency)
     
 #====================================================================
@@ -280,58 +278,37 @@ with fil_col4:
     # env = Environment(loader=FileSystemLoader("."), autoescape=select_autoescape())
     template = templateEnv.get_template(PDF_TEMPLATE_FILE)
 
-    # Convert chart to png image (base64 encoded)
-    def getBase64Img(img):
-        mybuff = io.StringIO()
-        img.write_html(mybuff, include_plotlyjs='cdn')
-        html_bytes = mybuff.getvalue().encode('utf8')
-        newBuff = io.BytesIO(html_bytes)
-        newBuff.seek(0)
-        base64_jpg = base64.b64encode(newBuff.read()).decode('utf8')
-        # href = f'<a href="data:image/png;charset=utf-8;base64, {base64_jpg}" download="plot.html">Download plot</a>'
-        # st.markdown(href, unsafe_allow_html=True)
-        html = f'data:image/png;base64,{base64_jpg}'
-        return html
-        # mybuff = io.StringIO()
-        # b_publishers.write_html(mybuff, include_plotlyjs='cdn')
-        # html_bytes = mybuff.getvalue().encode('utf8')
-        # newBuff = io.BytesIO(html_bytes)
-        # newBuff.seek(0)
-        # base64_jpg = base64.b64encode(newBuff.read()).decode('utf8')
-
-    def getTableHTML(table):
-        table_html = table.to_html(index=False)
-        newBuff = io.BytesIO(table_html)
-        newBuff.seek(0)
-        base64_jpg = base64.b64encode(newBuff.read()).decode('utf8')
-        href = f'<a href="data:image/png;charset=utf-8;base64, {base64_jpg}" download="plot.html">Download table</a>'
-        st.markdown(href, unsafe_allow_html=True)
+    #save dataframe to html
+    def getTableHTML(table, index, border):
+        table_html = table.to_html(index=index, escape=False, border=border)
         return table_html
     
+    #save plotly_express chart into png format
     def save_plotly_plot(name, fig):
         file_name = os.path.join(IMG_FOLDER, f"{ name }.png")
         fig.write_image(file_name, engine="kaleido")
         return file_name
     
+    #save altair chart into png format
     def save_altair_plot(name, fig):
         file_name = os.path.join(IMG_FOLDER, f"{ name }.png")
         fig.save(file_name)
         return file_name
     
-    # hsd_html = getBase64Img(chart_HistoricalStockData)
-    # fnot_html = getBase64Img(chart_FrequencyofNewsOverTime)
-    # ssot_html = getBase64Img(chart_SentimentScoreOverTime)
-    # publisher = getBase64Img(chart_Publishers)
     hsd_html = save_plotly_plot('historicalprice_line', chart_HistoricalStockData)
     fnot_html = save_plotly_plot('news_line', chart_FrequencyofNewsOverTime)
     ssot_html = save_plotly_plot('sentiment_pie', chart_SentimentScoreOverTime)
     publisher = save_plotly_plot('publiser_bar', chart_Publishers)
     ssac_html = save_altair_plot('companies_sentiment_bar', chart_SentimentScoreAcrossCompanies)
+    hpay_table_html = getTableHTML(table_HighestPriceAcrossYear, False, 1)
+    nnac_table_html = getTableHTML(table_NumberofNewsAcrossCompanies, False, 1)
+    ssac_table_html = getTableHTML(table_SentimentFrequency, True, 2)
+    tp_table_html = getTableHTML(table_TopPublishers, False, 1)
 
     try:
         wkhtml_path = pdfkit.configuration(wkhtmltopdf = 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe')
         
-        # hpay_html = getTableHTML(table_HighestPriceAcrossYear)
+        
 
         html = template.render(
             hsd_url = hsd_html,
@@ -339,8 +316,10 @@ with fil_col4:
             ssot_url = ssot_html,
             ssac_url = ssac_html,
             publishers_url = publisher,
-            # hpay_url = hpay_html,
-
+            hpay_table = hpay_table_html,
+            nnac_table = nnac_table_html,
+            ssac_table = ssac_table_html,
+            tp_table = tp_table_html
         )
 
         pdf = pdfkit.from_string(html, configuration = wkhtml_path, options = {"enable-local-file-access": "", "zoom": "1.3"})

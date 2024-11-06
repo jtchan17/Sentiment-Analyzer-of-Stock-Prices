@@ -1,36 +1,165 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+from sqlalchemy.sql import text
+import os
 
-st.title('Uber pickups in NYC')
+# Page configuration
+st.set_page_config(
+    page_title="Sentiment Analyzer Dashboard",
+    page_icon="📈",
+    layout="wide")
 
-DATE_COLUMN = 'date/time'
-DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
-            'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
+#######################################################################################################
+# Security
+#passlib,hashlib,bcrypt,scrypt
+import hashlib
+def make_hashes(password):
+	return hashlib.sha256(str.encode(password)).hexdigest()
 
-@st.cache_data
-def load_data(nrows):
-    data = pd.read_csv(DATA_URL, nrows=nrows)
-    lowercase = lambda x: str(x).lower()
-    data.rename(lowercase, axis='columns', inplace=True)
-    data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
-    return data
+def check_hashes(password,hashed_text):
+	if make_hashes(password) == hashed_text:
+		return hashed_text
+	return False
 
-data_load_state = st.text('Loading data...')
-data = load_data(10000)
-data_load_state.text("Done! (using st.cache_data)")
+# DB Management
+conn = st.connection('mysql', "sql")
+session = conn.session
 
-if st.checkbox('Show raw data'):
-    st.subheader('Raw data')
-    st.write(data)
+#######################################################################################################
+# DB  Functions
+def create_usertable():
+	session.execute('CREATE TABLE IF NOT EXISTS dashboard.users (username TEXT,password TEXT)')
 
-st.subheader('Number of pickups by hour')
-hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
-st.bar_chart(hist_values)
+def add_userdata(username,password):
+	query = text('INSERT INTO dashboard.users (username,password) VALUES (:username, :password)')
+	session.execute(query, {"username": username, "password": password})
+	session.commit()
 
-# Some number in the range 0-23
-hour_to_filter = st.slider('hour', 0, 23, 17)
-filtered_data = data[data[DATE_COLUMN].dt.hour == hour_to_filter]
+def login_user(username,password):
+	query = text('SELECT * FROM dashboard.users WHERE username = :username AND password = :password')
+	data = session.execute(query, {"username": username, "password": password})
+	# data = conn.query(f'SELECT * FROM dashboard.users WHERE username = {username} AND password = {password}')
+	return data
 
-st.subheader('Map of all pickups at %s:00' % hour_to_filter)
-st.map(filtered_data)
+def view_all_users():
+	data = session.execute(text('SELECT * FROM dashboard.users'))
+	return data
+
+def clear_fields():
+    st.session_state["username"] = ""
+    st.session_state["password"] = ""
+#######################################################################################################
+
+if "role" not in st.session_state:
+    st.session_state.role = None
+
+ROLES = [None, "User", "Guest", "Admin"]
+
+def login():
+    st.title('Welcome to Sentiment Analyzer Dashboard')
+    st.header("Log in", divider="blue")
+    role = st.selectbox("Choose your role", ROLES)
+    if role == "User":
+        menu = ["Login", "SignUp"]
+        login, signUp = st.tabs(menu)
+        with login:
+              # Clear fields when switching to this tab
+            if st.session_state.get("current_tab") != "Login":
+                clear_fields()
+            st.session_state["current_tab"] = "Login"
+
+            username = st.text_input("Username", key='loginUsername')
+            password = st.text_input("Password", key='loginPassword', type='password')
+            
+            col1, col2 = st.columns([3.5, 1])
+            with col1:
+                login_Button = st.button("Login")
+            with col2:
+                forgotPassword_Button = st.button('Forgot Password')
+                if login_Button:
+                    # if password == '12345':
+                    # create_usertable()
+                    hashed_pswd = make_hashes(password)
+
+                    result = login_user(username,check_hashes(password,hashed_pswd))
+                    if result:
+                        st.success("Logged In as {}".format(username))
+                    else:
+                        st.warning("Incorrect Username/Password")
+                    st.session_state.role = role
+                    st.rerun()
+        with signUp:
+            st.subheader("Create New Account")
+            new_user = st.text_input("Username", key='signupUsername')
+            new_password = st.text_input("Password", key='signupPassword', type='password')
+            query = text('SELECT * FROM dashboard.users WHERE username = :username AND password = :password')
+            result = session.execute(query, {"username": new_user, "password": make_hashes(new_password)})
+            signupButton = st.button("Sign up")
+            #check if the account has been created before
+            if signupButton:
+                if result:
+                  add_userdata(new_user,make_hashes(new_password))
+                  st.success("You have successfully created a valid Account")
+                  st.info("Go to Login Menu to login")
+                else:
+                    st.warning('This account has been created.')
+    else:     
+        if st.button("Login"):
+            st.session_state.role = role
+            st.rerun()
+
+def logout():
+    st.session_state.role = None
+    st.rerun()
+
+role = st.session_state.role
+
+logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
+settings_page = st.Page("settings.py", title="Settings", icon=":material/settings:")
+
+user= st.Page(
+    "users/user_dashboard.py",
+    title="Dashboard",
+    icon=":material/help:",
+    default=(role == "User"),
+)
+# request_2 = st.Page(
+#     "request/request_2.py", title="Request 2", icon=":material/bug_report:"
+# )
+guest = st.Page(
+    "guest/guest_dashboard.py",
+    title="Guest",
+    icon=":material/healing:",
+    default=(role == "Guest"),
+)
+# respond_2 = st.Page(
+#     "respond/respond_2.py", title="Respond 2", icon=":material/handyman:"
+# )
+admin_1 = st.Page(
+    "admin/admin_dashboard.py",
+    title="Dashboard",
+    icon=":material/person_add:",
+    default=(role == "Admin"),
+)
+# admin_2 = st.Page("admin/admin_2.py", title="Admin 2", icon=":material/security:")
+account_pages = [logout_page, settings_page]
+users_pages = [user]
+guest_pages = [guest]
+admin_pages = [admin_1]
+
+# st.title("Request manager")
+# st.logo("images/horizontal_blue.png", icon_image="images/icon_blue.png")
+page_dict = {}
+if st.session_state.role in ["User", "Admin"]:
+    page_dict["User"] = users_pages
+if st.session_state.role in ["Guest", "Admin"]:
+    page_dict["Guest"] = guest_pages
+if st.session_state.role == "Admin":
+    page_dict["Admin"] = admin_pages
+
+if len(page_dict) > 0:
+    pg = st.navigation({"Account": account_pages} | page_dict)
+else:
+    pg = st.navigation([st.Page(login)])
+
+pg.run()
