@@ -36,10 +36,9 @@ def add_userdata(username,password):
 	session.commit()
 
 def login_user(username,password):
-	query = text('SELECT * FROM dashboard.users WHERE username = :username AND password = :password')
-	data = session.execute(query, {"username": username, "password": password})
-	# data = conn.query(f'SELECT * FROM dashboard.users WHERE username = {username} AND password = {password}')
-	return data
+    query = text('SELECT * FROM dashboard.users WHERE username = :username AND password = :password')
+    data = session.execute(query, {"username": username, "password": password}).fetchone()
+    return data if data else None
 
 def view_all_users():
 	data = session.execute(text('SELECT * FROM dashboard.users'))
@@ -76,18 +75,19 @@ def login():
                 login_Button = st.button("Login")
             with col2:
                 forgotPassword_Button = st.button('Forgot Password')
-                if login_Button:
-                    # if password == '12345':
-                    # create_usertable()
-                    hashed_pswd = make_hashes(password)
 
-                    result = login_user(username,check_hashes(password,hashed_pswd))
-                    if result:
-                        st.success("Logged In as {}".format(username))
-                    else:
-                        st.warning("Incorrect Username/Password")
+            if login_Button:
+                # if password == '12345':
+                # create_usertable()
+                hashed_pswd = make_hashes(password)
+                result = login_user(username,check_hashes(password,hashed_pswd))
+                print("Login result:", result)
+                if result is None or not result:
+                    st.warning("Incorrect Username/Password") 
+                else:
+                    st.success("Logged In as {}".format(username))
                     st.session_state.role = role
-                    st.rerun()
+                    st.rerun()       
         with signUp:
             st.subheader("Create New Account")
             new_user = st.text_input("Username", key='signupUsername')
@@ -104,7 +104,7 @@ def login():
                 else:
                     st.warning('This account has been created.')
     else:     
-        if st.button("Login"):
+        if st.button("Log in"):
             st.session_state.role = role
             st.rerun()
 
