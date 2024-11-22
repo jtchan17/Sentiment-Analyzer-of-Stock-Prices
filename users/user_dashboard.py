@@ -38,14 +38,89 @@ alt.themes.enable("dark")
 #####################################################################
 # Side bar (Login)
 with st.sidebar:
-    st.title(f'Welcome {st.session_state.role}')
+    st.title(f'Welcome {st.session_state.role}! :sunglasses:')
+    # st.title(f'Welcome {st.session_state.loginUsername}! :sunglasses:')
+    custom_colors = {
+        'red': '#EF553B',
+        'blue': '#636EFA',
+        'green': '#00CC96',
+        'yellow': '#FECB52',
+        'pink': '#E45756',
+        'orange': '#FFA15A',
+        'purple': '#AB63FA',
+        'cyan': '#19D3F3',
+        'lime': '#B6E880',
+        'magenta': '#FF6692'
+    }
 
+    st.header('Theme', divider=True)
+    # Define theme options
+    theme_choice = st.radio("Choose theme", ("Light", "Dark"))
+
+    if theme_choice == "Light":
+        st.markdown("""
+            <style>
+                body {
+                    background-color: #ffffff;
+                    color: #000000;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+    elif theme_choice == "Dark":
+        st.markdown("""
+            <style>
+                body {
+                    background-color: #000000;
+                    color: #ffffff;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+    #------------------------------------------------------------------------
+    st.subheader('Companies: ', divider=True)
+    companies_default_colors = {
+        'AAPL': 'blue',
+        'AMZN': 'orange',
+        'TSLA': 'green',
+        'MSFT': 'red',
+        'META': 'purple'
+    }
+
+    #set the default colours for each companies
+    cust_aapl_selection = st.selectbox('AAPL', list(custom_colors.keys()), index=list(custom_colors.keys()).index(companies_default_colors['AAPL']))
+    cust_amzn_selection = st.selectbox('AMZN', list(custom_colors.keys()), index=list(custom_colors.keys()).index(companies_default_colors['AMZN']))
+    cust_tsla_selection = st.selectbox('TSLA', list(custom_colors.keys()), index=list(custom_colors.keys()).index(companies_default_colors['TSLA']))
+    cust_msft_selection = st.selectbox('MSFT', list(custom_colors.keys()), index=list(custom_colors.keys()).index(companies_default_colors['MSFT']))
+    cust_meta_selection = st.selectbox('META', list(custom_colors.keys()), index=list(custom_colors.keys()).index(companies_default_colors['META']))
+
+    #final colour selection
+    final_aapl_colour = custom_colors[cust_aapl_selection]
+    final_amzn_colour = custom_colors[cust_amzn_selection]
+    final_tsla_colour = custom_colors[cust_tsla_selection]
+    final_msft_colour = custom_colors[cust_msft_selection]
+    final_meta_colour = custom_colors[cust_meta_selection]
+
+    #------------------------------------------------------------------------
+    st.subheader('Sentiment: ', divider=True)
+    sentiment_default_colors = {
+        'positive': 'green',
+        'negative': 'red',
+        'neutral': 'blue'
+    }
+    cust_pos_selection = st.selectbox('Positive:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['positive']))
+    cust_neg_selection = st.selectbox('Negative:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['negative']))
+    cust_neu_selection = st.selectbox('Neutral:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['neutral']))
+
+    final_pos_colour = custom_colors[cust_pos_selection]
+    final_neg_colour = custom_colors[cust_neg_selection]
+    final_neu_colour = custom_colors[cust_neu_selection]
+
+    
 
 #####################################################################
 
 #####################################################################
 #   Dashboard
-st.title('📈 Sentiment Analyzer :blue[Dashboard] of Stock Prices')
+st.title('📈 :blue[Dashboard] of Stock Prices and Financial News')
 
 #search and filtering
 fil_col1, fil_col2, fil_col3, fil_col4 = st.columns([1.25, 2, 4, 1])
@@ -56,6 +131,14 @@ with fil_col1:
     select_year = popover.radio(label='Select Year',options=years, key='select_year', label_visibility="collapsed")
 
 with fil_col2:
+    popover = st.popover("Company")
+    aapl = popover.checkbox('AAPL', key='aapl', value=True)
+    amzn = popover.checkbox('AMZN', key='amzn', value=True)
+    meta = popover.checkbox('META', key='meta', value=True)
+    msft = popover.checkbox('MSFT', key='msft', value=True)
+    tsla = popover.checkbox('TSLA', key='tsla', value=True)
+    companies = {'AAPL': aapl, 'AMZN': amzn, 'META': meta, 'MSFT': msft, 'TSLA': tsla}
+
     if 'aapl' not in st.session_state:
         st.session_state['aapl'] = True
     if 'amzn' not in st.session_state:
@@ -68,14 +151,6 @@ with fil_col2:
         st.session_state['tsla'] = True
     if 'select_year' not in st.session_state:
         st.session_state['select_year'] = 'All'
-
-    popover = st.popover("Company")
-    aapl = popover.checkbox('AAPL', key='aapl', value=True)
-    amzn = popover.checkbox('AMZN', key='amzn', value=True)
-    meta = popover.checkbox('META', key='meta', value=True)
-    msft = popover.checkbox('MSFT', key='msft', value=True)
-    tsla = popover.checkbox('TSLA', key='tsla', value=True)
-    companies = {'AAPL': aapl, 'AMZN': amzn, 'META': meta, 'MSFT': msft, 'TSLA': tsla}
 
 with fil_col3:
     def clear_filters():
@@ -125,7 +200,12 @@ r1c1, r1c2 = st.columns((7, 3), gap='small')
 with r1c1:
     st.subheader('Historical Stock Data')
     st.markdown('###### currency in USD')
-    chart_HistoricalStockData = px.line(filtered_df_sp, x='date', y='adj_close', template='gridon', color='company')
+    chart_HistoricalStockData = px.line(filtered_df_sp, x='date', y='adj_close', template='gridon', color='company', 
+                                        color_discrete_map={'AAPL': final_aapl_colour,
+                                                            'AMZN': final_amzn_colour,
+                                                            'TSLA': final_tsla_colour,
+                                                            'MSFT': final_msft_colour,
+                                                            'META': final_meta_colour})
     st.plotly_chart(chart_HistoricalStockData, key='chart_HistoricalStockData', use_container_width=True)   
 
 with r1c2:
@@ -162,7 +242,12 @@ with r2c2:
     df_article_freq = filtered_df_fn.groupby(['published_date', 'company']).size().unstack(fill_value=0)
     df_article_freq = df_article_freq.reset_index()
     df_melted = pd.melt(df_article_freq, id_vars='published_date', var_name='company', value_name='frequency')
-    chart_FrequencyofNewsOverTime = px.line(df_melted, x='published_date', y="frequency", template='gridon', color='company')
+    chart_FrequencyofNewsOverTime = px.line(df_melted, x='published_date', y="frequency", template='gridon', color='company',
+                                            color_discrete_map={'AAPL': final_aapl_colour,
+                                                                'AMZN': final_amzn_colour,
+                                                                'TSLA': final_tsla_colour,
+                                                                'MSFT': final_msft_colour,
+                                                                'META': final_meta_colour})
     st.plotly_chart(chart_FrequencyofNewsOverTime,use_container_width=True)
 #====================================================================
 #ROW 3
@@ -188,10 +273,15 @@ with r3c1:
     def plot_pie():
         df_sentiment = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
         df_fn1 = filter_sentiment(df_sentiment)
+        # chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', color="sentiment_score",
+        #                                     color_discrete_map={'negative': '#EF553B', 
+        #                                                         'positive': '#00CC96', 
+        #                                                         'neutral': '#636EFA'},
+        #                                     hole=0.5)
         chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', color="sentiment_score",
-                                            color_discrete_map={'negative': '#EF553B', 
-                                                                'positive': '#00CC96', 
-                                                                'neutral': '#636EFA'},
+                                            color_discrete_map={'negative': final_neg_colour, 
+                                                                'positive': final_pos_colour, 
+                                                                'neutral': final_neu_colour},
                                             hole=0.5)
         chart_SentimentScoreOverTime.update_traces(textposition='inside')
         return chart_SentimentScoreOverTime
@@ -200,6 +290,19 @@ with r3c1:
 
 with r3c2:
     st.subheader('Sentiment Score Across Companies')
+    #define the final colour for each companies
+    company_colors = {
+        'AAPL': final_aapl_colour,
+        'AMZN': final_amzn_colour,
+        'TSLA': final_tsla_colour,
+        'MSFT': final_msft_colour,
+        'META': final_meta_colour
+    }
+
+    # define domain and range for Altair
+    domain = list(company_colors.keys())  # Companies
+    range_ = list(company_colors.values())  # Corresponding colors
+
     grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
     df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
     df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiment_score', value_name='frequency')
@@ -207,7 +310,7 @@ with r3c2:
     chart_SentimentScoreAcrossCompanies = alt.Chart(df_fn1).mark_bar().encode(
         x="sentiment_score",
         y="frequency",
-        color="company"
+        color=alt.Color("company", scale=alt.Scale(domain=domain, range=range_))
     )
     st.altair_chart(chart_SentimentScoreAcrossCompanies, use_container_width=True)
 
@@ -244,33 +347,24 @@ with r4c2:
     st.plotly_chart(chart_Publishers, use_container_width=True, height = 1000)
 
 #====================================================================
-#Sentiment Analyzer
-st.subheader('Sentiment Analyzer')
-st.markdown('#### Please put your financial headline here: ')
-headline_input = st.text_input('headline', label_visibility="collapsed")
+# Tab
+pricing_data, news = st.tabs(['Stock Price', 'News'])
+with pricing_data:
+#     st.subheader('Stock Price')
+#     with st.container(height=500, border=True):
+#         st.table(filtered_df_sp)
+    csv=filtered_df_sp.to_csv(index = False).encode('utf-8')
+    st.download_button(label='Download Historical Data', data= csv, file_name='Historical Data.csv')
 
-# Load the tokenizer and model
-tokenizer = BertTokenizer.from_pretrained('./model')
-model = BertForSequenceClassification.from_pretrained('./model')
+with news:
+    # st.subheader('Financial News')
+#     with st.container(height=500, border=True):
+#         df_fn1 = filtered_df_fn.sort_values(by="published_date", ascending=True)
+#         st.table(df_fn)
+    csv=filtered_df_fn.to_csv(index = False).encode('utf-8')
+    st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
 
-# Tokenize the input
-inputs = tokenizer(headline_input, return_tensors='pt')
-
-# Perform inference
-with torch.no_grad():
-    outputs = model(**inputs)
-
-# Get the prediction
-logits = outputs.logits
-prediction = torch.argmax(logits, dim=1).item()
-sentiments = {0: 'Neutral', 1: 'Negative', 2: 'Positive'}
-
-st.button('Predict')
-
-if headline_input != '':
-    st.markdown('Related company: ')
-    st.markdown(f'Sentiment: {sentiments[prediction]}')
-
+#====================================================================    
 with fil_col4:
     templateLoader = jinja2.FileSystemLoader(searchpath="./")
     templateEnv = jinja2.Environment(loader=templateLoader)
@@ -336,22 +430,5 @@ with fil_col4:
     except(ValueError, TypeError):
         st.button('Export⬇️')
         print('Button with label only')
-    
-#====================================================================
-# Tab
-pricing_data, news = st.tabs(['Stock Price', 'News'])
-with pricing_data:
-#     st.subheader('Stock Price')
-#     with st.container(height=500, border=True):
-#         st.table(filtered_df_sp)
-    csv=filtered_df_sp.to_csv(index = False).encode('utf-8')
-    st.download_button(label='Download Historical Data', data= csv, file_name='Historical Data.csv')
 
-with news:
-    # st.subheader('Financial News')
-#     with st.container(height=500, border=True):
-#         df_fn1 = filtered_df_fn.sort_values(by="published_date", ascending=True)
-#         st.table(df_fn)
-    csv=filtered_df_fn.to_csv(index = False).encode('utf-8')
-    st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
 #####################################################################

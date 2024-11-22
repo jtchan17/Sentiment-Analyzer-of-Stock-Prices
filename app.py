@@ -44,9 +44,12 @@ def view_all_users():
 	data = session.execute(text('SELECT * FROM dashboard.users'))
 	return data
 
-def clear_fields():
-    st.session_state["username"] = ""
-    st.session_state["password"] = ""
+def clear_fields(username, password):
+    if username not in st.session_state:
+        st.session_state[username] = ""
+
+    if password not in st.session_state:
+        st.session_state[password] = ""
 #######################################################################################################
 
 if "role" not in st.session_state:
@@ -62,14 +65,17 @@ def login():
         menu = ["Login", "SignUp"]
         login, signUp = st.tabs(menu)
         with login:
-              # Clear fields when switching to this tab
-            if st.session_state.get("current_tab") != "Login":
-                clear_fields()
             st.session_state["current_tab"] = "Login"
 
-            username = st.text_input("Username", key='loginUsername')
-            password = st.text_input("Password", key='loginPassword', type='password')
-            
+            keyLoginUsername  = 'loginUsername'
+            keyLoginPassword = 'loginPassword'
+            username = st.text_input("Username", key=keyLoginUsername)
+            password = st.text_input("Password", key=keyLoginPassword, type='password')
+
+              # Clear fields when switching to this tab
+            if st.session_state.get("current_tab") != "Login":
+                clear_fields(keyLoginUsername, keyLoginPassword)
+
             col1, col2 = st.columns([3.5, 1])
             with col1:
                 login_Button = st.button("Login")
@@ -87,7 +93,8 @@ def login():
                 else:
                     st.success("Logged In as {}".format(username))
                     st.session_state.role = role
-                    st.rerun()       
+                    st.rerun()  
+
         with signUp:
             st.subheader("Create New Account")
             new_user = st.text_input("Username", key='signupUsername')
@@ -126,9 +133,16 @@ user= st.Page(
 # request_2 = st.Page(
 #     "request/request_2.py", title="Request 2", icon=":material/bug_report:"
 # )
+
+user_SA = st.Page(
+     "users/sentiment_analyzer.py",
+     title="Sentiment Analyzer",
+     icon= '📈',
+)
+
 guest = st.Page(
     "guest/guest_dashboard.py",
-    title="Guest",
+    title="Dashboard",
     icon=":material/healing:",
     default=(role == "Guest"),
 )
@@ -142,8 +156,9 @@ admin_1 = st.Page(
     default=(role == "Admin"),
 )
 # admin_2 = st.Page("admin/admin_2.py", title="Admin 2", icon=":material/security:")
+
 account_pages = [logout_page, settings_page]
-users_pages = [user]
+users_pages = [user, user_SA]
 guest_pages = [guest]
 admin_pages = [admin_1]
 
