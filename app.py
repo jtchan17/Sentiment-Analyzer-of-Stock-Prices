@@ -131,7 +131,7 @@ role = st.session_state.role
 username = st.session_state.username
 
 logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
-settings_page = st.Page("edit_profile.py", title="Edit Profile", icon=":material/edit:")
+settings_page = st.Page("users/edit_profile.py", title="Edit Profile", icon=":material/edit:")
 
 user= st.Page(
     "users/user_dashboard.py",
