@@ -12,6 +12,7 @@ from streamlit.components.v1 import iframe
 import plotly.io as pio
 import matplotlib.pyplot as plt
 import os
+from streamlit_theme import st_theme
 
 #####################################################################
 PDF_TEMPLATE_FILE = 'PDFtemplate.html'
@@ -38,8 +39,8 @@ alt.themes.enable("dark")
 #####################################################################
 # Side bar (Login)
 with st.sidebar:
-    st.title(f'Welcome {st.session_state.role}! :sunglasses:')
-    # st.title(f'Welcome {st.session_state.loginUsername}! :sunglasses:')
+    # st.title(f'Welcome {st.session_state.role}! :sunglasses:')
+    st.title(f'Welcome {st.session_state.username}! :sunglasses:')
     custom_colors = {
         'red': '#EF553B',
         'blue': '#636EFA',
@@ -53,30 +54,32 @@ with st.sidebar:
         'magenta': '#FF6692'
     }
 
-    st.header('Theme', divider=True)
-    # Define theme options
-    theme_choice = st.radio("Choose theme", ("Light", "Dark"))
-
-    if theme_choice == "Light":
-        st.markdown("""
-            <style>
-                body {
-                    background-color: #ffffff;
-                    color: #000000;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-    elif theme_choice == "Dark":
-        st.markdown("""
-            <style>
-                body {
-                    background-color: #000000;
-                    color: #ffffff;
-                }
-            </style>
-        """, unsafe_allow_html=True)
+    # st.header('Theme', divider=True)
+    # # Define theme options
+    # theme_choice = st.radio("Choose theme", ("Dark", "Light"))
+    
+    # if theme_choice == "Light":
+    #     theme = st_theme()
+    #     st.write(theme)
+    #     st.markdown("""
+    #         <style>
+    #             body {
+    #                 background-color: #ffffff;
+    #                 color: #000000;
+    #             }
+    #         </style>
+    #     """, unsafe_allow_html=True)
+    # elif theme_choice == "Dark":
+    #     st.markdown("""
+    #         <style>
+    #             body {
+    #                 background-color: #000000;
+    #                 color: #ffffff;
+    #             }
+    #         </style>
+    #     """, unsafe_allow_html=True)
     #------------------------------------------------------------------------
-    st.subheader('Companies: ', divider=True)
+    st.subheader('Companies', divider=True)
     companies_default_colors = {
         'AAPL': 'blue',
         'AMZN': 'orange',
@@ -100,13 +103,13 @@ with st.sidebar:
     final_meta_colour = custom_colors[cust_meta_selection]
 
     #------------------------------------------------------------------------
-    st.subheader('Sentiment: ', divider=True)
+    st.subheader('Sentiment', divider=True)
     sentiment_default_colors = {
         'positive': 'green',
         'negative': 'red',
         'neutral': 'blue'
     }
-    cust_pos_selection = st.selectbox('Positive:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['positive']))
+    cust_pos_selection = st.selectbox('Positive: ', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['positive']))
     cust_neg_selection = st.selectbox('Negative:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['negative']))
     cust_neu_selection = st.selectbox('Neutral:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['neutral']))
 

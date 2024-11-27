@@ -55,12 +55,16 @@ def clear_fields(username, password):
 if "role" not in st.session_state:
     st.session_state.role = None
 
+if "username" not in st.session_state:
+    st.session_state.username = None
+
 ROLES = [None, "User", "Guest", "Admin"]
 
 def login():
     st.title('Welcome to Sentiment Analyzer Dashboard')
     st.header("Log in", divider="blue")
     role = st.selectbox("Choose your role", ROLES)
+    loginUsername = ''
     if role == "User":
         menu = ["Login", "SignUp"]
         login, signUp = st.tabs(menu)
@@ -69,9 +73,9 @@ def login():
 
             keyLoginUsername  = 'loginUsername'
             keyLoginPassword = 'loginPassword'
-            username = st.text_input("Username", key=keyLoginUsername)
-            password = st.text_input("Password", key=keyLoginPassword, type='password')
-
+            loginUsername = st.text_input("Username", key=keyLoginUsername)
+            loginPassword = st.text_input("Password", key=keyLoginPassword, type='password')
+            
               # Clear fields when switching to this tab
             if st.session_state.get("current_tab") != "Login":
                 clear_fields(keyLoginUsername, keyLoginPassword)
@@ -85,15 +89,17 @@ def login():
             if login_Button:
                 # if password == '12345':
                 # create_usertable()
-                hashed_pswd = make_hashes(password)
-                result = login_user(username,check_hashes(password,hashed_pswd))
+                hashed_pswd = make_hashes(loginPassword)
+                result = login_user(loginUsername,check_hashes(loginPassword,hashed_pswd))
                 print("Login result:", result)
                 if result is None or not result:
                     st.warning("Incorrect Username/Password") 
                 else:
-                    st.success("Logged In as {}".format(username))
+                    st.success("Logged In as {}".format(loginUsername))
                     st.session_state.role = role
+                    st.session_state.username = loginUsername
                     st.rerun()  
+            
 
         with signUp:
             st.subheader("Create New Account")
@@ -113,21 +119,24 @@ def login():
     else:     
         if st.button("Log in"):
             st.session_state.role = role
+            st.session_state.username = loginUsername
             st.rerun()
 
 def logout():
     st.session_state.role = None
+    st.session_state.username = None
     st.rerun()
 
 role = st.session_state.role
+username = st.session_state.username
 
 logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
-settings_page = st.Page("settings.py", title="Settings", icon=":material/settings:")
+settings_page = st.Page("edit_profile.py", title="Edit Profile", icon=":material/edit:")
 
 user= st.Page(
     "users/user_dashboard.py",
     title="Dashboard",
-    icon=":material/help:",
+    icon=":material/home:",
     default=(role == "User"),
 )
 # request_2 = st.Page(
@@ -137,13 +146,13 @@ user= st.Page(
 user_SA = st.Page(
      "users/sentiment_analyzer.py",
      title="Sentiment Analyzer",
-     icon= '📈',
+     icon= ':material/analytics:',
 )
 
 guest = st.Page(
     "guest/guest_dashboard.py",
     title="Dashboard",
-    icon=":material/healing:",
+    icon=":material/home:",
     default=(role == "Guest"),
 )
 # respond_2 = st.Page(
@@ -152,13 +161,13 @@ guest = st.Page(
 admin_1 = st.Page(
     "admin/admin_dashboard.py",
     title="Dashboard",
-    icon=":material/person_add:",
+    icon=":material/person:",
     default=(role == "Admin"),
 )
 # admin_2 = st.Page("admin/admin_2.py", title="Admin 2", icon=":material/security:")
 
-account_pages = [logout_page, settings_page]
-users_pages = [user, user_SA]
+account_pages = [logout_page]
+users_pages = [user, user_SA, settings_page]
 guest_pages = [guest]
 admin_pages = [admin_1]
 
@@ -173,7 +182,7 @@ if st.session_state.role == "Admin":
     page_dict["Admin"] = admin_pages
 
 if len(page_dict) > 0:
-    pg = st.navigation({"Account": account_pages} | page_dict)
+    pg = st.navigation({"": account_pages} | page_dict)
 else:
     pg = st.navigation([st.Page(login)])
 

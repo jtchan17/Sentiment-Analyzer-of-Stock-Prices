@@ -26,7 +26,20 @@ prediction = torch.argmax(logits, dim=1).item()
 sentiments = {0: 'Neutral', 1: 'Negative', 2: 'Positive'}
 
 st.button('Predict')
+companies = ['aapl', 'meta', 'msft', 'amzn', 'tsla']
+company_keywords = {
+    'aapl': ['apple', 'aapl'],
+    'meta': ['facebook', 'meta'],
+    'msft': ['microsoft', 'msft'],
+    'amzn': ['amazon', 'amzn'],
+    'tsla': ['tesla', 'tsla']
+}
+related_company = '-'
 
 if headline_input != '':
-    st.markdown('Related company: ')
+    for company, keywords in company_keywords.items():
+        if any(keyword in headline_input.lower() for keyword in keywords):
+            related_company = company
+            break
+    st.markdown(f'Related company: {related_company.upper()}')
     st.markdown(f'Sentiment: {sentiments[prediction]}')
