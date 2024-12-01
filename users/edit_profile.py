@@ -21,7 +21,7 @@ st.write(f"You are logged in as {st.session_state.role}.")
 with st.form(key='profile_form'):
     # User's current name and email (pre-filled)
     # name = st.text_input("Name", value="John Doe")
-    username = st.text_input("Username", value=f"{st.session_state.username}")
+    username = st.text_input("Username", value=f"{st.session_state.username}", disabled=True)
     # email = st.text_input("Email", value="john.doe@example.com")
 
     # Password change fields
