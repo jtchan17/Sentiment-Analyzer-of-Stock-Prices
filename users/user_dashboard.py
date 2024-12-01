@@ -143,7 +143,7 @@ with fil_col2:
     companies = {'AAPL': aapl, 'AMZN': amzn, 'META': meta, 'MSFT': msft, 'TSLA': tsla}
 
     if 'aapl' not in st.session_state:
-        st.session_state['aapl'] = True
+        st.session_state['aapl'] = False
     if 'amzn' not in st.session_state:
         st.session_state['amzn'] = True
     if 'meta' not in st.session_state:
