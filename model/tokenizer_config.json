@@ -1,57 +1,22 @@
 {
+  "add_bos_token": false,
+  "add_prefix_space": false,
   "added_tokens_decoder": {
-    "0": {
-      "content": "[PAD]",
+    "50256": {
+      "content": "<|endoftext|>",
       "lstrip": false,
-      "normalized": false,
-      "rstrip": false,
-      "single_word": false,
-      "special": true
-    },
-    "2": {
-      "content": "[UNK]",
-      "lstrip": false,
-      "normalized": false,
-      "rstrip": false,
-      "single_word": false,
-      "special": true
-    },
-    "3": {
-      "content": "[CLS]",
-      "lstrip": false,
-      "normalized": false,
-      "rstrip": false,
-      "single_word": false,
-      "special": true
-    },
-    "4": {
-      "content": "[SEP]",
-      "lstrip": false,
-      "normalized": false,
-      "rstrip": false,
-      "single_word": false,
-      "special": true
-    },
-    "5": {
-      "content": "[MASK]",
-      "lstrip": false,
-      "normalized": false,
+      "normalized": true,
       "rstrip": false,
       "single_word": false,
       "special": true
     }
   },
-  "clean_up_tokenization_spaces": true,
-  "cls_token": "[CLS]",
-  "do_basic_tokenize": true,
-  "do_lower_case": true,
-  "mask_token": "[MASK]",
-  "model_max_length": 1000000000000000019884624838656,
-  "never_split": null,
-  "pad_token": "[PAD]",
-  "sep_token": "[SEP]",
-  "strip_accents": null,
-  "tokenize_chinese_chars": true,
-  "tokenizer_class": "BertTokenizer",
-  "unk_token": "[UNK]"
+  "bos_token": "<|endoftext|>",
+  "clean_up_tokenization_spaces": false,
+  "eos_token": "<|endoftext|>",
+  "errors": "replace",
+  "model_max_length": 1024,
+  "pad_token": "<|endoftext|>",
+  "tokenizer_class": "GPT2Tokenizer",
+  "unk_token": "<|endoftext|>"
 }
