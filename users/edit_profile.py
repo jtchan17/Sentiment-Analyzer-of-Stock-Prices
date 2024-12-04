@@ -15,8 +15,7 @@ def edit_userpassword(username,password):
      
 st.header("Update Your Profile")
 st.write(f"You are logged in as {st.session_state.role}.")
-# username = st.session_state.username
-# username = next(iter(username))  # Get the first (and only) element
+
 # Form for profile updates
 with st.form(key='profile_form'):
     # User's current name and email (pre-filled)
@@ -34,7 +33,7 @@ with st.form(key='profile_form'):
     # Bio text area
     # bio = st.text_area("Bio", "This is my bio...")
 
-    # Submit button
+    # Submit button 
     submit_button = st.form_submit_button("Save Changes")
 
     if submit_button:

@@ -30,7 +30,7 @@ conn = st.connection('mysql', type='sql')
 def load_data(query):
     df = conn.query(query, ttl=600)
     return df
-df_fn = load_data('SELECT * from dashboard.financialnews;')
+df_fn = load_data('SELECT * from dashboard.financialnewswtopics;')
 df_sp = load_data('SELECT * from dashboard.stockprice;')
 alt.themes.enable("dark")
 
