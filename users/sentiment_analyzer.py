@@ -28,8 +28,8 @@ st.button('Predict')
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
 # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone', num_labels=3, output_hidden_states=True)
-model = GPT2ForSequenceClassification.from_pretrained('./gpt2model')
-tokenizer = GPT2Tokenizer.from_pretrained('./gpt2model')
+model = GPT2ForSequenceClassification.from_pretrained('./model')
+tokenizer = GPT2Tokenizer.from_pretrained('./model')
 
 #------------------------------------------------------------------------------------------------------------------------------
 # Tokenize the input

@@ -13,6 +13,8 @@ import plotly.io as pio
 import matplotlib.pyplot as plt
 import os
 from streamlit_theme import st_theme
+import uuid
+import re
 
 #####################################################################
 PDF_TEMPLATE_FILE = 'PDFtemplate.html'
@@ -42,50 +44,53 @@ with st.sidebar:
     # st.title(f'Welcome {st.session_state.role}! :sunglasses:')
     st.title(f'Welcome {st.session_state.username}! :sunglasses:')
     custom_colors = {
-        'red': '#EF553B',
-        'blue': '#636EFA',
-        'green': '#00CC96',
-        'yellow': '#FECB52',
-        'pink': '#E45756',
-        'orange': '#FFA15A',
-        'purple': '#AB63FA',
-        'cyan': '#19D3F3',
-        'lime': '#B6E880',
-        'magenta': '#FF6692'
+        'Red': '#EF553B',
+        'Blue': '#636EFA',
+        'Green': '#00CC96',
+        'Yellow': '#FECB52',
+        'Pink': '#E45756',
+        'Orange': '#FFA15A',
+        'Purple': '#AB63FA',
+        'Cyan': '#19D3F3',
+        'Lime': '#B6E880',
+        'Magenta': '#FF6692'
     }
-
-    # st.header('Theme', divider=True)
-    # # Define theme options
-    # theme_choice = st.radio("Choose theme", ("Dark", "Light"))
-    
-    # if theme_choice == "Light":
-    #     theme = st_theme()
-    #     st.write(theme)
-    #     st.markdown("""
-    #         <style>
-    #             body {
-    #                 background-color: #ffffff;
-    #                 color: #000000;
-    #             }
-    #         </style>
-    #     """, unsafe_allow_html=True)
-    # elif theme_choice == "Dark":
-    #     st.markdown("""
-    #         <style>
-    #             body {
-    #                 background-color: #000000;
-    #                 color: #ffffff;
-    #             }
-    #         </style>
-    #     """, unsafe_allow_html=True)
     #------------------------------------------------------------------------
+    #Text Colour
+    font_colors = {
+        'Violet': ':violet',
+        'Blue':':blue',
+        'Green': ':green',
+        'Orange': ':orange',
+        'Red': ':red',
+        'Purple': ':purple'
+    }
+    font_family = {
+        'Sans-serif': 'sans-serif',
+        'Serif': 'serif',
+        'Monospace': 'monospace',
+        'Arial': 'arial',
+        'Lucida Console': 'Lucida Console',
+        'Times New Roman': 'Times New Roman',
+        'Courier New': 'Courier New'
+    }
+    font_style = ['normal', 'italic', 'oblique']
+
+    st.subheader('Header', divider=True)
+    text_colour_selection = st.selectbox('Colour', options=list(font_colors.keys()), index=0)
+    final_font_colour = font_colors[text_colour_selection]
+    font_family_selection = st.selectbox('Font Family', options=list(font_family.keys()), index=0)
+    final_font_family = font_family[font_family_selection]
+    font_style_selection = st.selectbox('Style', font_style, index=0)
+    #------------------------------------------------------------------------
+    #Companies Colour
     st.subheader('Companies', divider=True)
     companies_default_colors = {
-        'AAPL': 'blue',
-        'AMZN': 'orange',
-        'TSLA': 'green',
-        'MSFT': 'red',
-        'META': 'purple'
+        'AAPL': 'Blue',
+        'AMZN': 'Orange',
+        'TSLA': 'Green',
+        'MSFT': 'Red',
+        'META': 'Purple'
     }
 
     #set the default colours for each companies
@@ -103,11 +108,12 @@ with st.sidebar:
     final_meta_colour = custom_colors[cust_meta_selection]
 
     #------------------------------------------------------------------------
+    #Sentiment Colour
     st.subheader('Sentiment', divider=True)
     sentiment_default_colors = {
-        'positive': 'green',
-        'negative': 'red',
-        'neutral': 'blue'
+        'positive': 'Green',
+        'negative': 'Red',
+        'neutral': 'Blue'
     }
     cust_pos_selection = st.selectbox('Positive: ', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['positive']))
     cust_neg_selection = st.selectbox('Negative:', list(custom_colors.keys()), index=list(custom_colors.keys()).index(sentiment_default_colors['negative']))
@@ -123,7 +129,85 @@ with st.sidebar:
 
 #####################################################################
 #   Dashboard
-st.title('📈 :blue[Dashboard] of Stock Prices and Financial News')
+# st.title(f'📈 {final_font_colour}[Dashboard of Stock Prices and Financial News]')
+st.markdown(
+    f"""
+    <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 40px; font-style: {font_style_selection}; font-weight: bold;">
+    📈 Dashboard of Stock Prices and Financial News
+    </p>
+    """,
+    unsafe_allow_html=True,
+)
+st.write(f'{final_font_family}')
+#-------------------------------------------------------------------------------------------
+#CSS Injection
+#Sidebar
+st.markdown(
+    f"""
+    <style>
+
+        html, body, [class*="css"]  {{
+        font-family: {final_font_family};
+        }}
+    </style>
+
+    """,
+        unsafe_allow_html=True,
+    )
+
+#Button
+st.markdown(
+    f"""
+    <style>
+    .stButton > button {{
+        font-family: {final_font_family}; /* Change to desired font */
+        font-size: 16px; /* Adjust font size */
+        color: {text_colour_selection}; /* Text color */
+        background-color: #111111; /* Button background color */
+        border: 2px solid;
+        border-radius: 10px; /* Rounded corners */
+        padding: 5px 10px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+#Download Button
+st.markdown(
+    f"""
+    <style>
+    [class="stDownloadButton"] > button {{
+        font-family: {final_font_family}; /* Change to desired font */
+        font-size: 16px; /* Adjust font size */
+        color: {text_colour_selection}; /* Text color */
+        background-color: #111111; /* Button background color */
+        border: 2px solid;
+        border-radius: 10px; /* Rounded corners */
+        padding: 5px 10px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+#Popover
+st.markdown(
+    f"""
+    <style>
+    [class="stPopover"] {{
+        font-family: '{final_font_family}'; /* Change to desired font */
+        font-size: 16px; /* Adjust font size */
+        color: {text_colour_selection}; /* Text color */
+        background-color: #111111; /* Button background color */
+        border-radius: 10px; /* Rounded corners */
+        padding: 5px 10px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+#-------------------------------------------------------------------------------------------
 
 #search and filtering
 fil_col1, fil_col2, fil_col3, fil_col4 = st.columns([1.25, 2, 4, 1])
@@ -131,7 +215,7 @@ fil_col1, fil_col2, fil_col3, fil_col4 = st.columns([1.25, 2, 4, 1])
 with fil_col1:
     years = ['All', '2021', '2022', '2023']
     popover = st.popover("Select Year")
-    select_year = popover.radio(label='Select Year',options=years, key='select_year', label_visibility="collapsed")
+    select_year = popover.radio(label=f'{final_font_colour}[Select Year]',options=years, key='select_year', label_visibility="collapsed")
 
 with fil_col2:
     popover = st.popover("Company")
@@ -201,18 +285,41 @@ else:
 #ROW 1
 r1c1, r1c2 = st.columns((7, 3), gap='small')
 with r1c1:
-    st.subheader('Historical Stock Data')
-    st.markdown('###### currency in USD')
+    # st.subheader(f'{final_font_colour}[Historical Stock Data]')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Historical Stock Data
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
+    # st.markdown(f'###### {final_font_colour}[currency in USD]')
     chart_HistoricalStockData = px.line(filtered_df_sp, x='date', y='adj_close', template='gridon', color='company', 
                                         color_discrete_map={'AAPL': final_aapl_colour,
                                                             'AMZN': final_amzn_colour,
                                                             'TSLA': final_tsla_colour,
                                                             'MSFT': final_msft_colour,
                                                             'META': final_meta_colour})
+    chart_HistoricalStockData.update_layout(
+        font=dict(
+            color= text_colour_selection,
+            family=font_family_selection,
+            style=font_style_selection
+        )
+    )
     st.plotly_chart(chart_HistoricalStockData, key='chart_HistoricalStockData', use_container_width=True)   
 
 with r1c2:
-    st.subheader('Highest Price Across Years')
+    # st.subheader(f'{final_font_colour}[Highest Price Across Years]')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Highest Price Across Years
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
     # query = 'SELECT YEAR(date) as Year, company AS Companies, MAX(high) AS Highest FROM dashboard.stockprice WHERE YEAR(date) in (2021, 2022, 2023) GROUP BY Companies, Year ORDER BY Year DESC, Highest DESC;'
     # df_highest = conn.query(query, ttl=600)
 
@@ -232,16 +339,34 @@ with r1c2:
     
     table_HighestPriceAcrossYear = filter_years(filtered_df_sp, select_year)
     st.table(table_HighestPriceAcrossYear)
+    # st.table(table_HighestPriceAcrossYear.style.set_properties(**{"color": f"{text_colour_selection}"}))
 #====================================================================
 #ROW 2
 r2c1, r2c2 = st.columns((3, 5), gap='small')
 with r2c1:
-    st.subheader('Number of News Across Companies')
+    # st.subheader(f'{final_font_colour}[Number of News Across Companies]')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Number of News Across Companies
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
     table_NumberofNewsAcrossCompanies = filtered_df_fn.groupby('company')['title'].count().reset_index(name='Total')
     st.table(table_NumberofNewsAcrossCompanies)
+    # st.table(table_NumberofNewsAcrossCompanies.style.set_properties(**{"color": f"{text_colour_selection}"}))
 
 with r2c2:
-    st.subheader('Frequency of News Over Time')
+    # st.subheader(f'{final_font_colour}[Frequency of News Over Time]')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Frequency of News Over Time
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
     df_article_freq = filtered_df_fn.groupby(['published_date', 'company']).size().unstack(fill_value=0)
     df_article_freq = df_article_freq.reset_index()
     df_melted = pd.melt(df_article_freq, id_vars='published_date', var_name='company', value_name='frequency')
@@ -251,10 +376,17 @@ with r2c2:
                                                                 'TSLA': final_tsla_colour,
                                                                 'MSFT': final_msft_colour,
                                                                 'META': final_meta_colour})
+    chart_FrequencyofNewsOverTime.update_layout(
+        font=dict(
+            color= text_colour_selection,
+            family=font_family_selection,
+            style=font_style_selection
+        )
+    )
     st.plotly_chart(chart_FrequencyofNewsOverTime,use_container_width=True)
 #====================================================================
 #ROW 3
-popover = st.popover("Choose sentiments to display")
+popover = st.popover('Choose sentiments to display')
 positive = popover.checkbox('Positive', key='positive', value=True)
 negative = popover.checkbox('Negative', key='negative', value=True)
 neutral = popover.checkbox('Neutral', key='neutral', value=True)
@@ -270,7 +402,15 @@ def filter_sentiment(df):
 
 r3c1, r3c2 = st.columns((5,5), gap='small')
 with r3c1:
-    st.subheader('Sentiment Score Over Time')
+    # st.subheader(f'{final_font_colour}[Sentiment Score Over Time]')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Sentiment Score Over Time
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
 
     #sentiment score
     def plot_pie():
@@ -289,10 +429,25 @@ with r3c1:
         chart_SentimentScoreOverTime.update_traces(textposition='inside')
         return chart_SentimentScoreOverTime
     chart_SentimentScoreOverTime = plot_pie()
+    chart_SentimentScoreOverTime.update_layout(
+        font=dict(
+            color= text_colour_selection,
+            family=font_family_selection,
+            style=font_style_selection
+        )
+    )
     st.plotly_chart(chart_SentimentScoreOverTime, use_container_width=True)
 
 with r3c2:
-    st.subheader('Sentiment Score Across Companies')
+    # st.subheader(f'{final_font_colour}[Sentiment Score Across Companies]')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Sentiment Score Across Companies
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
     #define the final colour for each companies
     company_colors = {
         'AAPL': final_aapl_colour,
@@ -323,13 +478,22 @@ with r3c2:
     grouped_sentiment_df_fn.rename(columns={'company': 'Companies', 'negative': 'Negative', 'neutral': 'Neutral', 'positive': 'Positive'}, inplace=True)
     table_SentimentFrequency = grouped_sentiment_df_fn
     st.table(table_SentimentFrequency)
+    # st.table(table_SentimentFrequency.style.set_properties(**{"color": f"{text_colour_selection}"}))
     
 #====================================================================
 #ROW 4
 r4c1, r4c2 = st.columns((3, 7), gap='small')
 
 with r4c1:
-    st.subheader('Top 10 Publishers :newspaper:')
+    # st.subheader(f'{final_font_colour}[Top 10 Publishers]'+':newspaper:')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Top 10 Publishers 📰
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
     df_fn1 = (filtered_df_fn.groupby('publisher').size().reset_index(name='Total'))
     table_TopPublishers = (df_fn1.sort_values(by="Total", ascending=False)).head(10)
     st.dataframe(table_TopPublishers,
@@ -343,12 +507,27 @@ with r4c1:
                 )
 
 with r4c2:
-    st.subheader('Publishers :newspaper:')
+    # st.subheader(f'{final_font_colour}[Publishers]'+':newspaper:')
+    st.markdown(
+        f"""
+        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Publishers 📰
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
     df_fn1 = filtered_df_fn.groupby('publisher').size().reset_index(name='Total')
     chart_Publishers = px.bar(df_fn1,x='Total', y='publisher', template='seaborn')
     chart_Publishers.update_traces(text=df_fn1['publisher'], textposition='inside')
+    chart_Publishers.update_layout(
+        font=dict(
+            color= text_colour_selection,
+            family=font_family_selection,
+            style=font_style_selection
+        )
+    )
     st.plotly_chart(chart_Publishers, use_container_width=True, height = 1000)
-
+    
 #====================================================================
 # Tab
 pricing_data, news = st.tabs(['Stock Price', 'News'])
@@ -366,6 +545,7 @@ with news:
 #         st.table(df_fn)
     csv=filtered_df_fn.to_csv(index = False).encode('utf-8')
     st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
+
 
 #====================================================================    
 with fil_col4:
@@ -415,23 +595,23 @@ with fil_col4:
             hpay_table = hpay_table_html,
             nnac_table = nnac_table_html,
             ssac_table = ssac_table_html,
-            tp_table = tp_table_html
+            tp_table = tp_table_html,
         )
 
         pdf = pdfkit.from_string(html, configuration = wkhtml_path, options = {"enable-local-file-access": "", "zoom": "1.3"})
 
         submit = st.download_button(
-                "Export⬇️ ",
+                "Export⬇️",
                 data=pdf,
                 file_name="Stock Prices Report.pdf",
                 mime="application/pdf",
             )
-        
+
         if submit:
             st.balloons()
 
     except(ValueError, TypeError):
-        st.button('Export⬇️')
+        export_button = st.button('Export⬇️')
         print('Button with label only')
 
 #####################################################################
