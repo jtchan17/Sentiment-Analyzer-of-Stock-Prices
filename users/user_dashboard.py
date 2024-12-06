@@ -58,6 +58,7 @@ with st.sidebar:
     #------------------------------------------------------------------------
     #Text Colour
     font_colors = {
+        'White': ':white',
         'Violet': ':violet',
         'Blue':':blue',
         'Green': ':green',
@@ -74,11 +75,11 @@ with st.sidebar:
         'Times New Roman': 'Times New Roman',
         'Courier New': 'Courier New'
     }
-    font_style = ['normal', 'italic', 'oblique']
+    font_style = ['normal', 'italic']
 
     st.subheader('Header', divider=True)
-    text_colour_selection = st.selectbox('Colour', options=list(font_colors.keys()), index=0)
-    final_font_colour = font_colors[text_colour_selection]
+    # text_colour_selection = st.selectbox('Colour', options=list(font_colors.keys()), index=0)
+    # final_font_colour = font_colors[text_colour_selection]
     font_family_selection = st.selectbox('Font Family', options=list(font_family.keys()), index=0)
     final_font_family = font_family[font_family_selection]
     font_style_selection = st.selectbox('Style', font_style, index=0)
@@ -132,76 +133,104 @@ with st.sidebar:
 # st.title(f'📈 {final_font_colour}[Dashboard of Stock Prices and Financial News]')
 st.markdown(
     f"""
-    <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 40px; font-style: {font_style_selection}; font-weight: bold;">
+    <p style="font-family: {final_font_family}; font-size: 40px; font-style: {font_style_selection}; font-weight: bold;">
     📈 Dashboard of Stock Prices and Financial News
     </p>
     """,
     unsafe_allow_html=True,
 )
-st.write(f'{final_font_family}')
 #-------------------------------------------------------------------------------------------
 #CSS Injection
-#Sidebar
-st.markdown(
-    f"""
-    <style>
-
-        html, body, [class*="css"]  {{
-        font-family: {final_font_family};
-        }}
-    </style>
-
-    """,
-        unsafe_allow_html=True,
-    )
-
 #Button
 st.markdown(
     f"""
     <style>
-    .stButton > button {{
-        font-family: {final_font_family}; /* Change to desired font */
-        font-size: 16px; /* Adjust font size */
-        color: {text_colour_selection}; /* Text color */
+    .stButton{{
         background-color: #111111; /* Button background color */
-        border: 2px solid;
         border-radius: 10px; /* Rounded corners */
         padding: 5px 10px;
+    }}
+    .stButton > button > div > p {{
+        font-family: {final_font_family} !important; /* Change to desired font */
+        font-size: 16px; /* Adjust font size */
+        font-style: {font_style_selection}
     }}
     </style>
     """,
     unsafe_allow_html=True
 )
 
-#Download Button
+# #Download Button
 st.markdown(
     f"""
     <style>
-    [class="stDownloadButton"] > button {{
-        font-family: {final_font_family}; /* Change to desired font */
-        font-size: 16px; /* Adjust font size */
-        color: {text_colour_selection}; /* Text color */
+    .stDownloadButton {{
         background-color: #111111; /* Button background color */
-        border: 2px solid;
         border-radius: 10px; /* Rounded corners */
         padding: 5px 10px;
+    }}
+    .stDownloadButton > button > div > p{{
+        font-family: {final_font_family} !important; /* Change to desired font */
+        font-size: 16px; /* Adjust font size */
+        font-style: {font_style_selection}
     }}
     </style>
     """,
     unsafe_allow_html=True
 )
 
-#Popover
+# #Popover
 st.markdown(
     f"""
     <style>
-    [class="stPopover"] {{
-        font-family: '{final_font_family}'; /* Change to desired font */
-        font-size: 16px; /* Adjust font size */
-        color: {text_colour_selection}; /* Text color */
+    .stPopover {{
         background-color: #111111; /* Button background color */
         border-radius: 10px; /* Rounded corners */
         padding: 5px 10px;
+    }}
+
+    .stPopover > div > button > div > p{{
+        font-family: {final_font_family}; /* Change to desired font */
+        font-size: 16px; /* Adjust font size */
+        font-style: {font_style_selection}
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+#Table
+st.markdown(
+    f"""
+    <style>
+    .stTable{{
+        font-family: {final_font_family}; /* Change to desired font */
+        font-style: {font_style_selection}
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+#DataFrame
+# st.markdown(
+#     f"""
+#     <style>
+#     div[data-testid="stDataFrame"] > div[data-testid="stDataFrameResizable"] > div[class="stDataFrameGlideDataEditor gdg-wmyidgi"] > div > div[class="gdg-sldgczr6"] > div> canvas[data-testid="data-grid-canvas"] > table[role="grid"]{{
+#         background-color: #555555
+#         font-family: {final_font_family}; /* Change to desired font */
+#         font-style: {font_style_selection}
+#     }}
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+st.markdown(
+    f"""
+    <style>
+    .stElementContainer{{
+        font-family: {final_font_family}; /* Change to desired font */
+        font-style: {font_style_selection}
     }}
     </style>
     """,
@@ -215,7 +244,7 @@ fil_col1, fil_col2, fil_col3, fil_col4 = st.columns([1.25, 2, 4, 1])
 with fil_col1:
     years = ['All', '2021', '2022', '2023']
     popover = st.popover("Select Year")
-    select_year = popover.radio(label=f'{final_font_colour}[Select Year]',options=years, key='select_year', label_visibility="collapsed")
+    select_year = popover.radio(label='Select Year',options=years, key='select_year', label_visibility="collapsed")
 
 with fil_col2:
     popover = st.popover("Company")
@@ -229,13 +258,13 @@ with fil_col2:
     if 'aapl' not in st.session_state:
         st.session_state['aapl'] = False
     if 'amzn' not in st.session_state:
-        st.session_state['amzn'] = True
+        st.session_state['amzn'] = False
     if 'meta' not in st.session_state:
-        st.session_state['meta'] = True
+        st.session_state['meta'] = False
     if 'msft' not in st.session_state:
-        st.session_state['msft'] = True
+        st.session_state['msft'] = False
     if 'tsla' not in st.session_state:
-        st.session_state['tsla'] = True
+        st.session_state['tsla'] = False
     if 'select_year' not in st.session_state:
         st.session_state['select_year'] = 'All'
 
@@ -288,7 +317,7 @@ with r1c1:
     # st.subheader(f'{final_font_colour}[Historical Stock Data]')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Historical Stock Data
         </p>
         """,
@@ -303,7 +332,6 @@ with r1c1:
                                                             'META': final_meta_colour})
     chart_HistoricalStockData.update_layout(
         font=dict(
-            color= text_colour_selection,
             family=font_family_selection,
             style=font_style_selection
         )
@@ -314,7 +342,7 @@ with r1c2:
     # st.subheader(f'{final_font_colour}[Highest Price Across Years]')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Highest Price Across Years
         </p>
         """,
@@ -347,7 +375,7 @@ with r2c1:
     # st.subheader(f'{final_font_colour}[Number of News Across Companies]')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Number of News Across Companies
         </p>
         """,
@@ -361,7 +389,7 @@ with r2c2:
     # st.subheader(f'{final_font_colour}[Frequency of News Over Time]')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Frequency of News Over Time
         </p>
         """,
@@ -378,7 +406,6 @@ with r2c2:
                                                                 'META': final_meta_colour})
     chart_FrequencyofNewsOverTime.update_layout(
         font=dict(
-            color= text_colour_selection,
             family=font_family_selection,
             style=font_style_selection
         )
@@ -405,7 +432,7 @@ with r3c1:
     # st.subheader(f'{final_font_colour}[Sentiment Score Over Time]')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style=font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Sentiment Score Over Time
         </p>
         """,
@@ -431,7 +458,6 @@ with r3c1:
     chart_SentimentScoreOverTime = plot_pie()
     chart_SentimentScoreOverTime.update_layout(
         font=dict(
-            color= text_colour_selection,
             family=font_family_selection,
             style=font_style_selection
         )
@@ -442,7 +468,7 @@ with r3c2:
     # st.subheader(f'{final_font_colour}[Sentiment Score Across Companies]')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Sentiment Score Across Companies
         </p>
         """,
@@ -488,7 +514,7 @@ with r4c1:
     # st.subheader(f'{final_font_colour}[Top 10 Publishers]'+':newspaper:')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Top 10 Publishers 📰
         </p>
         """,
@@ -510,7 +536,7 @@ with r4c2:
     # st.subheader(f'{final_font_colour}[Publishers]'+':newspaper:')
     st.markdown(
         f"""
-        <p style="color: {text_colour_selection}; font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Publishers 📰
         </p>
         """,
@@ -521,10 +547,9 @@ with r4c2:
     chart_Publishers.update_traces(text=df_fn1['publisher'], textposition='inside')
     chart_Publishers.update_layout(
         font=dict(
-            color= text_colour_selection,
             family=font_family_selection,
             style=font_style_selection
-        )
+        ),
     )
     st.plotly_chart(chart_Publishers, use_container_width=True, height = 1000)
     
