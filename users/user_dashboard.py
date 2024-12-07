@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd 
 import plotly_express as px 
 import altair as alt
-from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import matplotlib.pyplot as plt
 import pdfkit
@@ -12,15 +11,13 @@ from streamlit.components.v1 import iframe
 import plotly.io as pio
 import matplotlib.pyplot as plt
 import os
-from streamlit_theme import st_theme
-import uuid
-import re
+from wordcloud import WordCloud, STOPWORDS
 
-#####################################################################
+##########################################################################################################################################
 PDF_TEMPLATE_FILE = 'PDFtemplate.html'
 IMG_FOLDER = os.path.join(os.getcwd(), 'image')
 
-#####################################################################
+##########################################################################################################################################
 # Redirect to app.py if not logged in, otherwise show the navigation menu
 # menu_with_redirect()
 
@@ -36,9 +33,9 @@ df_fn = load_data('SELECT * from dashboard.financialnewswtopics;')
 df_sp = load_data('SELECT * from dashboard.stockprice;')
 alt.themes.enable("dark")
 
-#####################################################################
+##########################################################################################################################################
 
-#####################################################################
+##########################################################################################################################################
 # Side bar (Login)
 with st.sidebar:
     # st.title(f'Welcome {st.session_state.role}! :sunglasses:')
@@ -77,7 +74,7 @@ with st.sidebar:
     }
     font_style = ['normal', 'italic']
 
-    st.subheader('Header', divider=True)
+    st.subheader('Text', divider=True)
     # text_colour_selection = st.selectbox('Colour', options=list(font_colors.keys()), index=0)
     # final_font_colour = font_colors[text_colour_selection]
     font_family_selection = st.selectbox('Font Family', options=list(font_family.keys()), index=0)
@@ -126,9 +123,9 @@ with st.sidebar:
 
     
 
-#####################################################################
+##########################################################################################################################################
 
-#####################################################################
+##########################################################################################################################################
 #   Dashboard
 # st.title(f'📈 {final_font_colour}[Dashboard of Stock Prices and Financial News]')
 st.markdown(
@@ -216,7 +213,7 @@ st.markdown(
 # st.markdown(
 #     f"""
 #     <style>
-#     div[data-testid="stDataFrame"] > div[data-testid="stDataFrameResizable"] > div[class="stDataFrameGlideDataEditor gdg-wmyidgi"] > div > div[class="gdg-sldgczr6"] > div> canvas[data-testid="data-grid-canvas"] > table[role="grid"]{{
+#     div[data-testid="stDataFrame"] > div > div[class="stDataFrameGlideDataEditor gdg-wmyidgi"] > div > div[class="gdg-sldgczr6"] > div > canvas[data-testid="data-grid-canvas"]{{
 #         background-color: #555555
 #         font-family: {final_font_family}; /* Change to desired font */
 #         font-style: {font_style_selection}
@@ -228,7 +225,21 @@ st.markdown(
 st.markdown(
     f"""
     <style>
-    .stElementContainer{{
+    div[data-testid="stDataFrame"] > div[data-testid="stDataFrameResizable"] > div[class="stDataFrameGlideDataEditor gdg-wmyidgi"] > div > div[class="gdg-s1dgczr6"] > div[class="dvn-underlay"] {{
+        background-color: #555555
+        font-family: {final_font_family}; /* Change to desired font */
+        font-style: {font_style_selection}
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+#Tabs
+st.markdown(
+    f"""
+    <style>
+    .stTabs{{
         font-family: {final_font_family}; /* Change to desired font */
         font-style: {font_style_selection}
     }}
@@ -310,7 +321,7 @@ else:
     filtered_df_fn = conn.query(fn_query, ttl=10000)
     filtered_df_sp = conn.query(sp_query, ttl=10000)
 
-#====================================================================
+#======================================================================================================================================== 
 #ROW 1
 r1c1, r1c2 = st.columns((7, 3), gap='small')
 with r1c1:
@@ -366,9 +377,10 @@ with r1c2:
         return result
     
     table_HighestPriceAcrossYear = filter_years(filtered_df_sp, select_year)
+    table_HighestPriceAcrossYear = table_HighestPriceAcrossYear
     st.table(table_HighestPriceAcrossYear)
     # st.table(table_HighestPriceAcrossYear.style.set_properties(**{"color": f"{text_colour_selection}"}))
-#====================================================================
+#======================================================================================================================================== 
 #ROW 2
 r2c1, r2c2 = st.columns((3, 5), gap='small')
 with r2c1:
@@ -382,6 +394,7 @@ with r2c1:
         unsafe_allow_html=True,
     )
     table_NumberofNewsAcrossCompanies = filtered_df_fn.groupby('company')['title'].count().reset_index(name='Total')
+    table_NumberofNewsAcrossCompanies = table_NumberofNewsAcrossCompanies
     st.table(table_NumberofNewsAcrossCompanies)
     # st.table(table_NumberofNewsAcrossCompanies.style.set_properties(**{"color": f"{text_colour_selection}"}))
 
@@ -411,7 +424,7 @@ with r2c2:
         )
     )
     st.plotly_chart(chart_FrequencyofNewsOverTime,use_container_width=True)
-#====================================================================
+#======================================================================================================================================== 
 #ROW 3
 popover = st.popover('Choose sentiments to display')
 positive = popover.checkbox('Positive', key='positive', value=True)
@@ -432,7 +445,7 @@ with r3c1:
     # st.subheader(f'{final_font_colour}[Sentiment Score Over Time]')
     st.markdown(
         f"""
-        <p style=font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
             Sentiment Score Over Time
         </p>
         """,
@@ -487,16 +500,16 @@ with r3c2:
     domain = list(company_colors.keys())  # Companies
     range_ = list(company_colors.values())  # Corresponding colors
 
-    grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
-    df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
-    df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiment_score', value_name='frequency')
-    df_fn1 = filter_sentiment(df_melted)
-    chart_SentimentScoreAcrossCompanies = alt.Chart(df_fn1).mark_bar().encode(
-        x="sentiment_score",
-        y="frequency",
-        color=alt.Color("company", scale=alt.Scale(domain=domain, range=range_))
-    )
-    st.altair_chart(chart_SentimentScoreAcrossCompanies, use_container_width=True)
+    # grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
+    # df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
+    # df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiment_score', value_name='frequency')
+    # df_fn1 = filter_sentiment(df_melted)
+    # chart_SentimentScoreAcrossCompanies = alt.Chart(df_fn1).mark_bar().encode(
+    #     x="sentiment_score",
+    #     y="frequency",
+    #     color=alt.Color("company", scale=alt.Scale(domain=domain, range=range_))
+    # )
+    # st.altair_chart(chart_SentimentScoreAcrossCompanies, use_container_width=True)
 
     df_fn1 = filter_sentiment(filtered_df_fn)
     grouped_sentiment_df_fn = df_fn1.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
@@ -506,7 +519,25 @@ with r3c2:
     st.table(table_SentimentFrequency)
     # st.table(table_SentimentFrequency.style.set_properties(**{"color": f"{text_colour_selection}"}))
     
-#====================================================================
+    #WordCloud
+    # Start with one review:
+    text = " ".join(title for title in filtered_df_fn.title)
+
+    # Create stopword list:
+    stopwords = set(STOPWORDS)
+    stopwords.update(filtered_df_fn['company'].tolist())
+    stopwords.update(filtered_df_fn['publisher'].tolist())
+    stopwords.update(['Apple', 'Tesla', 'Meta', 'Amazon', 'Microsoft'])
+    # stopwords.update(["META", "TSLA", "AMZN", "AAPL", "MSFT", 'Microsoft', 'Tesla', 'Apple', 'Amazon'])
+
+    # Generate a word cloud image
+    wordcloud = WordCloud(stopwords=stopwords, background_color="black").generate(text)
+    # Display the generated image:
+    # the matplotlib way:
+    word_frequncy = plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    word_frequncy = st.pyplot(plt)
+#======================================================================================================================================== 
 #ROW 4
 r4c1, r4c2 = st.columns((3, 7), gap='small')
 
@@ -522,7 +553,9 @@ with r4c1:
     )
     df_fn1 = (filtered_df_fn.groupby('publisher').size().reset_index(name='Total'))
     table_TopPublishers = (df_fn1.sort_values(by="Total", ascending=False)).head(10)
-    st.dataframe(table_TopPublishers,
+    table_TopPublishers = table_TopPublishers
+    st.dataframe(table_TopPublishers)
+    df = st.dataframe(table_TopPublishers,
                 column_order=("publisher", "Total"),
                 hide_index=True,
                 width=None,
@@ -531,7 +564,6 @@ with r4c1:
                     "Total": st.column_config.ProgressColumn("Total",format="%f",min_value=0,max_value=max(df_fn1.Total),)
                     }
                 )
-
 with r4c2:
     # st.subheader(f'{final_font_colour}[Publishers]'+':newspaper:')
     st.markdown(
@@ -553,7 +585,7 @@ with r4c2:
     )
     st.plotly_chart(chart_Publishers, use_container_width=True, height = 1000)
     
-#====================================================================
+#======================================================================================================================================== 
 # Tab
 pricing_data, news = st.tabs(['Stock Price', 'News'])
 with pricing_data:
@@ -572,7 +604,7 @@ with news:
     st.download_button(label='Download Financial News', data= csv, file_name='Financial News.csv')
 
 
-#====================================================================    
+#======================================================================================================================================== 
 with fil_col4:
     templateLoader = jinja2.FileSystemLoader(searchpath="./")
     templateEnv = jinja2.Environment(loader=templateLoader)
@@ -596,11 +628,18 @@ with fil_col4:
         fig.save(file_name)
         return file_name
     
+    def save_word_cloud(name, fig):
+        file_name = os.path.join(IMG_FOLDER, f"{ name }.png")
+        # Save the image in the img folder:
+        wordcloud.to_file(file_name)
+        return file_name
+    
     hsd_html = save_plotly_plot('historicalprice_line', chart_HistoricalStockData)
     fnot_html = save_plotly_plot('news_line', chart_FrequencyofNewsOverTime)
     ssot_html = save_plotly_plot('sentiment_pie', chart_SentimentScoreOverTime)
     publisher = save_plotly_plot('publiser_bar', chart_Publishers)
-    ssac_html = save_altair_plot('companies_sentiment_bar', chart_SentimentScoreAcrossCompanies)
+    wf_html = save_word_cloud('wordcloud', word_frequncy)
+    # ssac_html = save_altair_plot('companies_sentiment_bar', chart_SentimentScoreAcrossCompanies)
     hpay_table_html = getTableHTML(table_HighestPriceAcrossYear, False, 1)
     nnac_table_html = getTableHTML(table_NumberofNewsAcrossCompanies, False, 1)
     ssac_table_html = getTableHTML(table_SentimentFrequency, True, 2)
@@ -615,7 +654,7 @@ with fil_col4:
             hsd_url = hsd_html,
             fnot_url = fnot_html,
             ssot_url = ssot_html,
-            ssac_url = ssac_html,
+            wf_url = wf_html,
             publishers_url = publisher,
             hpay_table = hpay_table_html,
             nnac_table = nnac_table_html,
@@ -639,4 +678,4 @@ with fil_col4:
         export_button = st.button('Export⬇️')
         print('Button with label only')
 
-#####################################################################
+##########################################################################################################################################

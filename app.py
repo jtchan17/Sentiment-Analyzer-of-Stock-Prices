@@ -206,7 +206,7 @@ guest = st.Page(
 )
 
 account_pages = [logout_page]
-users_pages = [user, user_SA, settings_page, user_analysis]
+users_pages = [user, user_SA, settings_page]
 guest_pages = [guest]
 
 # st.title("Request manager")
