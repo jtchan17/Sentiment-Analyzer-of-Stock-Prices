@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <style>
+            body {
+            font-family: {{selected_font}};
+            font-style: {{selected_font_style}};
+            }
+        </style>
         <meta name="pdfkit-page-size" content="A4"/>
         <meta name="pdfkit-orientation" content="Landscape"/>
         <title>Sentiment Analyzer</title>
@@ -8,6 +14,8 @@
     <body>
         <h1 class="dashboard_title" style="font-size: 30px; font-weight:bold;">Sentiment Analyzer <span style="color: blue">Dashboard</span> of Stock Prices</h1>
         <div style="width: 100%; display: table;">
+            <p>This is the selected font {{selected_font}}</p>
+            <p>This is the selected font style {{selected_font_style}}</p>
             <div style="display: table-row">
                 <div style="width: 70%; display: table-cell;"> 
                     <span class= "hsd_header" style="font-size:25px; font-weight:bold">Historical Stock Data</span>
@@ -46,17 +54,20 @@
         <div style="width: 100%; display: table">
             <div style="display: table-row">
                 <div style="width: 60%; display: table-cell;"> 
-                    <span class="ssot_header" style="font-size:25px; font-weight:bold">Sentiment Score Over Time</span>
+                    <span class="ssot_header" style="font-size:25px; font-weight:bold; height: 500px">Sentiment Score Over Time</span>
                     <br><br>
-                    <img src='{{ ssot_url }}' alt="Sentiment Score Over Time" width=100% height="400px">
+                    <img src='{{ ssot_url }}' alt="Sentiment Score Over Time" width=100% height="300px">
                     <br/><br/>
+                    {{ ssac_table}}
                 </div>
                 <div style="margin-left: 100%; display: table-cell;">  
-                    {{ ssac_table}}
+                    <span class="sdbt_header" style="font-size:25px; font-weight:bold">Sentiment Distribution by Topic</span>
+                    <br><br>
+                    <img src='{{ sdbt_url }}' alt="Sentiment Distribution by Topic" width=100% height="300px">
                     <br/><br/>
                     <span class="wf_header" style="font-size:25px; font-weight:bold">Word Frequency</span>
                     <br><br>
-                    <img src='{{ wf_url }}' alt="Word Frequency" style="width:60%;height:330px;">
+                    <img src='{{ wf_url }}' alt="Word Frequency">
                 </div>
             </div>
         </div>
