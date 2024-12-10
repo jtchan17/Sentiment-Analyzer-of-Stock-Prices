@@ -28,9 +28,15 @@ st.button('Predict')
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 # tokenizer = BertTokenizer.from_pretrained('yiyanghkust/finbert-tone')
 # model = BertForSequenceClassification.from_pretrained('yiyanghkust/finbert-tone', num_labels=3, output_hidden_states=True)
-model = GPT2ForSequenceClassification.from_pretrained('./model')
-tokenizer = GPT2Tokenizer.from_pretrained('./model')
+@st.cache_resource
+def load_model():
+    model = GPT2ForSequenceClassification.from_pretrained('./model')
+    return model
 
+@st.cache_resource
+def load_tokenizer():
+    tokenizer = GPT2Tokenizer.from_pretrained('./model')
+    return tokenizer
 #------------------------------------------------------------------------------------------------------------------------------
 # Tokenize the input
 # inputs = tokenizer(headline_input, return_tensors='pt')
@@ -39,8 +45,10 @@ def classify_sentiment(text):
     if not text.strip():
         return "Invalid input: Text is empty. Please provide valid input."
     # Encode the text
+    tokenizer = load_tokenizer()
     encoded_text = tokenizer.encode(text, return_tensors="pt")
     # Predict the sentiment
+    model = load_model()
     sentiment = model(encoded_text)[0]
     # Decode the sentiment
     return sentiment.argmax().item()

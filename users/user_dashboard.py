@@ -25,11 +25,11 @@ IMG_FOLDER = os.path.join(os.getcwd(), 'image')
 conn = st.connection('mysql', type='sql')
 
 # Loading the data
-@st.cache_resource
+@st.cache_data
 def load_data(query):
     df = conn.query(query, ttl=600)
     return df
-df_fn = load_data('SELECT * from dashboard.financialnewswtopics;')
+df_fn = load_data('SELECT * from dashboard.fnwithtopics;')
 df_sp = load_data('SELECT * from dashboard.stockprice;')
 alt.themes.enable("dark")
 
@@ -239,7 +239,7 @@ st.markdown(
 st.markdown(
     f"""
     <style>
-    .stTabs{{
+    .stTabs > div > div > div > button > div > p{{
         font-family: {final_font_family}; /* Change to desired font */
         font-style: {font_style_selection}
     }}
@@ -247,6 +247,15 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+#Chart
+def chart_update_layout(chart):
+    chart.update_layout(
+            font=dict(
+                family=font_family_selection,
+                style=font_style_selection
+            )
+        )
 #-------------------------------------------------------------------------------------------
 
 #search and filtering
@@ -290,6 +299,20 @@ with fil_col3:
         st.session_state['positive'] = True
         st.session_state['negative'] = True
         st.session_state['neutral'] = True
+        st.session_state['politics'] = True
+        st.session_state['economy'] = True
+        st.session_state['technology'] = True
+        st.session_state['health'] = True
+        st.session_state['sports'] = True
+        st.session_state['entertainment'] = True
+        st.session_state['science'] = True
+        st.session_state['business'] = True
+        st.session_state['travel'] = True
+        st.session_state['education'] = True
+        st.session_state['lifestyle'] = True
+        st.session_state['finance'] = True
+        st.session_state['investing'] = True
+        st.session_state['wellness'] = True
 
     btn_clear = st.button('Clear All Filter', key='clearFilter', on_click=clear_filters)
 
@@ -297,7 +320,7 @@ with fil_col3:
 def query(table, year, companies):
     query = f'SELECT * FROM dashboard.{table} WHERE '
     if year != 'All':
-        query += f'YEAR(published_date) = {year} ' if table == 'financialnews' else f'YEAR(date) = {year} '
+        query += f'YEAR(published_date) = {year} ' if table == 'fnwithtopics' else f'YEAR(date) = {year} '
         if companies:
             companies_str = ', '.join(f'"{company}"' for company in companies)
             query += f'AND company IN ({companies_str})'
@@ -316,7 +339,7 @@ if select_year == 'All' and not selected_companies:
     filtered_df_fn = df_fn
     filtered_df_sp = df_sp
 else:
-    fn_query = query('financialnews', select_year, selected_companies)
+    fn_query = query('fnwithtopics', select_year, selected_companies)
     sp_query = query('stockprice', select_year, selected_companies)
     filtered_df_fn = conn.query(fn_query, ttl=10000)
     filtered_df_sp = conn.query(sp_query, ttl=10000)
@@ -341,12 +364,7 @@ with r1c1:
                                                             'TSLA': final_tsla_colour,
                                                             'MSFT': final_msft_colour,
                                                             'META': final_meta_colour})
-    chart_HistoricalStockData.update_layout(
-        font=dict(
-            family=font_family_selection,
-            style=font_style_selection
-        )
-    )
+    chart_update_layout(chart_HistoricalStockData)
     st.plotly_chart(chart_HistoricalStockData, key='chart_HistoricalStockData', use_container_width=True)   
 
 with r1c2:
@@ -417,29 +435,68 @@ with r2c2:
                                                                 'TSLA': final_tsla_colour,
                                                                 'MSFT': final_msft_colour,
                                                                 'META': final_meta_colour})
-    chart_FrequencyofNewsOverTime.update_layout(
-        font=dict(
-            family=font_family_selection,
-            style=font_style_selection
-        )
-    )
+    chart_update_layout(chart_FrequencyofNewsOverTime)
     st.plotly_chart(chart_FrequencyofNewsOverTime,use_container_width=True)
 #======================================================================================================================================== 
 #ROW 3
-popover = st.popover('Choose sentiments to display')
-positive = popover.checkbox('Positive', key='positive', value=True)
-negative = popover.checkbox('Negative', key='negative', value=True)
-neutral = popover.checkbox('Neutral', key='neutral', value=True)
+pop_col1, pop_col2 = st.columns([5,5])
+with pop_col1:
+    sentiment_popover = st.popover('Choose sentiments')
+    positive = sentiment_popover.checkbox('Positive', key='positive', value=True)
+    negative = sentiment_popover.checkbox('Negative', key='negative', value=True)
+    neutral = sentiment_popover.checkbox('Neutral', key='neutral', value=True)
 
-# List of selected companies
-sentiments = {'positive': positive, 'negative': negative, 'neutral': neutral}
-selected_sentiments = [sentiment for sentiment, selected in sentiments.items() if selected]
+    # List of selected companies
+    sentiments = {'Positive': positive, 'Negative': negative, 'Neutral': neutral}
+    selected_sentiments = [sentiment for sentiment, selected in sentiments.items() if selected]
 
-def filter_sentiment(df):
-    if selected_sentiments:
-        df = df[df['sentiment_score'].isin(selected_sentiments)]
-    return df
+    def filter_sentiment(df):
+        if selected_sentiments:
+            df = df[df['sentiment_score'].isin(selected_sentiments)]
+        return df
 
+with pop_col2:
+    topic_popover = st.popover('Choose topics')
+    politics = topic_popover.checkbox('Politics', key='politics', value=True)
+    economy = topic_popover.checkbox('Economy', key='economy', value=True)
+    technology = topic_popover.checkbox('Technology', key='technology', value=True)
+    health = topic_popover.checkbox('Health', key='health', value=True)
+    sports = topic_popover.checkbox('Sports', key='sports', value=True)
+    entertainment = topic_popover.checkbox('Entertainment', key='entertainment', value=True)
+    science = topic_popover.checkbox('Science', key='science', value=True)
+    business = topic_popover.checkbox('Business', key='business', value=True)
+    travel = topic_popover.checkbox('Travel', key='travel', value=True)
+    education = topic_popover.checkbox('Education', key='education', value=True)
+    lifestyle = topic_popover.checkbox('Lifestyle', key='lifestyle', value=True)
+    finance = topic_popover.checkbox('Finance', key='finance', value=True)
+    investing = topic_popover.checkbox('Investing', key='investing', value=True)
+    wellness = topic_popover.checkbox('Wellness', key='wellness', value=True)
+
+    # #List of Topics
+    topics = {
+        'Politics\r': politics,
+        'Economy\r': economy,
+        'Technology\r': technology,
+        'Health\r': health,
+        'Sports\r': sports,
+        'Entertainment\r': entertainment,
+        'Science\r': science,
+        'Business\r': business,
+        'Travel\r': travel,
+        'Education\r': education,
+        'Lifestyle\r': lifestyle,
+        'Finance\r': finance,
+        'Investing\r': investing,
+        'Wellness\r': wellness,}
+
+    # selected_topics = [topic for topic, select in topics.items() if select]
+    selected_topics = [topic for topic, select in topics.items() if select]
+
+    def filter_topics(dffn):
+        if selected_topics:
+            dffn = dffn[dffn['topics'].isin(selected_topics)]
+        return dffn
+    
 r3c1, r3c2 = st.columns((5,5), gap='small')
 with r3c1:
     # st.subheader(f'{final_font_colour}[Sentiment Score Over Time]')
@@ -456,61 +513,19 @@ with r3c1:
     def plot_pie():
         df_sentiment = filtered_df_fn.groupby('sentiment_score').size().reset_index(name='Total')
         df_fn1 = filter_sentiment(df_sentiment)
-        # chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', color="sentiment_score",
-        #                                     color_discrete_map={'negative': '#EF553B', 
-        #                                                         'positive': '#00CC96', 
-        #                                                         'neutral': '#636EFA'},
-        #                                     hole=0.5)
         chart_SentimentScoreOverTime = px.pie(df_fn1, values='Total', names='sentiment_score', color="sentiment_score",
-                                            color_discrete_map={'negative': final_neg_colour, 
-                                                                'positive': final_pos_colour, 
-                                                                'neutral': final_neu_colour},
+                                            color_discrete_map={'Negative': final_neg_colour, 
+                                                                'Positive': final_pos_colour, 
+                                                                'Neutral': final_neu_colour},
                                             hole=0.5)
         chart_SentimentScoreOverTime.update_traces(textposition='inside')
         return chart_SentimentScoreOverTime
+    
     chart_SentimentScoreOverTime = plot_pie()
-    chart_SentimentScoreOverTime.update_layout(
-        font=dict(
-            family=font_family_selection,
-            style=font_style_selection
-        )
-    )
+    chart_update_layout(chart_SentimentScoreOverTime)
     st.plotly_chart(chart_SentimentScoreOverTime, use_container_width=True)
 
-with r3c2:
-    # st.subheader(f'{final_font_colour}[Sentiment Score Across Companies]')
-    st.markdown(
-        f"""
-        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
-            Sentiment Score Across Companies
-        </p>
-        """,
-        unsafe_allow_html=True,
-    )
-    #define the final colour for each companies
-    company_colors = {
-        'AAPL': final_aapl_colour,
-        'AMZN': final_amzn_colour,
-        'TSLA': final_tsla_colour,
-        'MSFT': final_msft_colour,
-        'META': final_meta_colour
-    }
-
-    # define domain and range for Altair
-    domain = list(company_colors.keys())  # Companies
-    range_ = list(company_colors.values())  # Corresponding colors
-
-    # grouped_sentiment_df_fn = filtered_df_fn.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
-    # df_sentiment_freq = grouped_sentiment_df_fn.reset_index()
-    # df_melted = pd.melt(df_sentiment_freq, id_vars='company', var_name='sentiment_score', value_name='frequency')
-    # df_fn1 = filter_sentiment(df_melted)
-    # chart_SentimentScoreAcrossCompanies = alt.Chart(df_fn1).mark_bar().encode(
-    #     x="sentiment_score",
-    #     y="frequency",
-    #     color=alt.Color("company", scale=alt.Scale(domain=domain, range=range_))
-    # )
-    # st.altair_chart(chart_SentimentScoreAcrossCompanies, use_container_width=True)
-
+    #Sentiments Score Across Companies
     df_fn1 = filter_sentiment(filtered_df_fn)
     grouped_sentiment_df_fn = df_fn1.groupby(['company', 'sentiment_score']).size().unstack(fill_value=0)
     table_SentimentFrequency = grouped_sentiment_df_fn.reset_index()
@@ -518,7 +533,30 @@ with r3c2:
     table_SentimentFrequency = grouped_sentiment_df_fn
     st.table(table_SentimentFrequency)
     # st.table(table_SentimentFrequency.style.set_properties(**{"color": f"{text_colour_selection}"}))
-    
+
+with r3c2:
+    # st.subheader(f'{final_font_colour}[Sentiment Score Across Companies]')
+    st.markdown(
+        f"""
+        <p style="font-family: {final_font_family}; font-size: 24px; font-style: {font_style_selection}; font-weight: bold;">
+            Sentiments Distribution by Topic
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
+    #Sentiments Distribution by Topic
+    # st.dataframe(df_fn1)
+    df_fn1 = filter_topics(df_fn1)
+    chart_TopicFrequency = px.histogram(
+        df_fn1, 
+        x='sentiment_score', 
+        color='topics', 
+        labels={'sentiment_score': 'Sentiments', 'count': 'Total'},
+        template='plotly_dark'
+    )
+    chart_update_layout(chart_TopicFrequency)
+    st.plotly_chart(chart_TopicFrequency)
+
     #WordCloud
     # Start with one review:
     text = " ".join(title for title in filtered_df_fn.title)
@@ -554,7 +592,6 @@ with r4c1:
     df_fn1 = (filtered_df_fn.groupby('publisher').size().reset_index(name='Total'))
     table_TopPublishers = (df_fn1.sort_values(by="Total", ascending=False)).head(10)
     table_TopPublishers = table_TopPublishers
-    st.dataframe(table_TopPublishers)
     df = st.dataframe(table_TopPublishers,
                 column_order=("publisher", "Total"),
                 hide_index=True,
@@ -577,12 +614,7 @@ with r4c2:
     df_fn1 = filtered_df_fn.groupby('publisher').size().reset_index(name='Total')
     chart_Publishers = px.bar(df_fn1,x='Total', y='publisher', template='seaborn')
     chart_Publishers.update_traces(text=df_fn1['publisher'], textposition='inside')
-    chart_Publishers.update_layout(
-        font=dict(
-            family=font_family_selection,
-            style=font_style_selection
-        ),
-    )
+    chart_update_layout(chart_Publishers)
     st.plotly_chart(chart_Publishers, use_container_width=True, height = 1000)
     
 #======================================================================================================================================== 
@@ -638,6 +670,7 @@ with fil_col4:
     fnot_html = save_plotly_plot('news_line', chart_FrequencyofNewsOverTime)
     ssot_html = save_plotly_plot('sentiment_pie', chart_SentimentScoreOverTime)
     publisher = save_plotly_plot('publiser_bar', chart_Publishers)
+    sdbt_html = save_plotly_plot('topics_bar', chart_TopicFrequency)
     wf_html = save_word_cloud('wordcloud', word_frequncy)
     # ssac_html = save_altair_plot('companies_sentiment_bar', chart_SentimentScoreAcrossCompanies)
     hpay_table_html = getTableHTML(table_HighestPriceAcrossYear, False, 1)
@@ -654,12 +687,15 @@ with fil_col4:
             hsd_url = hsd_html,
             fnot_url = fnot_html,
             ssot_url = ssot_html,
+            sdbt_url = sdbt_html,
             wf_url = wf_html,
             publishers_url = publisher,
             hpay_table = hpay_table_html,
             nnac_table = nnac_table_html,
             ssac_table = ssac_table_html,
             tp_table = tp_table_html,
+            selected_font = final_font_family,
+            selected_font_style = font_style_selection,
         )
 
         pdf = pdfkit.from_string(html, configuration = wkhtml_path, options = {"enable-local-file-access": "", "zoom": "1.3"})
